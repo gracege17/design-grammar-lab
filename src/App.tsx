@@ -1,40 +1,43 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import grammarJson from './grammar/style-grammar.json';
-import { generatePoster, Grid, planBatch, type PosterRequest, type StyleGrammar } from './engine/generate';
+import { generatePoster, Grid, planBatch, type PosterRequest } from './engine/generate';
+import { GRAMMARS, grammarById } from './grammar';
 import { loadGrammarFonts, measureText } from './render/measure';
 import { PosterCard, type PosterHandle } from './ui/PosterCard';
 import './App.css';
 
-const grammar = grammarJson as StyleGrammar;
 const COUNT = 10;
 
 const randomSeed = () => Math.random().toString(36).slice(2, 8);
-const initialSeed = () => new URLSearchParams(location.search).get('seed') || 'grammar01';
+const params = new URLSearchParams(location.search);
 
 export default function App() {
   const [fontsReady, setFontsReady] = useState(false);
-  const [seed, setSeed] = useState(initialSeed);
+  const [styleId, setStyleId] = useState(() => grammarById(params.get('style')).id);
+  const [seed, setSeed] = useState(() => params.get('seed') || 'grammar01');
   const [showGrid, setShowGrid] = useState(false);
   // Per-slot overrides when a single poster is regenerated.
   const [overrides, setOverrides] = useState<Record<number, PosterRequest>>({});
   const cards = useRef<(PosterHandle | null)[]>([]);
 
+  const grammar = useMemo(() => grammarById(styleId), [styleId]);
+
   useEffect(() => {
-    loadGrammarFonts(grammar).then(() => setFontsReady(true));
+    Promise.all(GRAMMARS.map(loadGrammarFonts)).then(() => setFontsReady(true));
   }, []);
 
   useEffect(() => {
     const url = new URL(location.href);
+    url.searchParams.set('style', styleId);
     url.searchParams.set('seed', seed);
     history.replaceState(null, '', url);
-  }, [seed]);
+  }, [seed, styleId]);
 
-  const grid = useMemo(() => Grid.fromGrammar(grammar), []);
+  const grid = useMemo(() => Grid.fromGrammar(grammar), [grammar]);
   const layouts = useMemo(() => {
     if (!fontsReady) return [];
     const plan = planBatch(seed, COUNT, grammar);
     return plan.map((req, i) => generatePoster(overrides[i] ?? req, grammar, measureText));
-  }, [fontsReady, seed, overrides]);
+  }, [fontsReady, seed, overrides, grammar]);
 
   const regenerateAll = () => {
     setOverrides({});
@@ -61,10 +64,26 @@ export default function App() {
         <div className="brand">
           <h1>Design Grammar Lab</h1>
           <p>
-            Phase 1 · {grammar.name} · {grid.columns}×{grid.rows} grid
+            {grammar.name} · {grid.columns}×{grid.rows} grid · {grammar.strategies.join(' / ')}
           </p>
         </div>
         <div className="controls">
+          <label>
+            Style
+            <select
+              value={styleId}
+              onChange={(e) => {
+                setOverrides({});
+                setStyleId(e.target.value);
+              }}
+            >
+              {GRAMMARS.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+          </label>
           <label>
             Seed
             <input
@@ -94,7 +113,7 @@ export default function App() {
         <section className="gallery">
           {layouts.map((layout, i) => (
             <PosterCard
-              key={`${layout.seed}-${i}`}
+              key={`${grammar.id}-${layout.seed}-${i}`}
               ref={(h) => {
                 cards.current[i] = h;
               }}

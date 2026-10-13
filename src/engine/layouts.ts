@@ -3,12 +3,15 @@
 // pre-designed structural options — spans, motif, mirroring — never free positions.
 import { area } from './grid';
 import type { Composer } from './composer';
-import type { PosterContent, ShapeName, StrategyName } from './types';
+import { INDUSTRIAL } from './layouts-industrial';
+import type { PosterContent, ShapeName } from './types';
 
 export interface Variant {
   name: string;
   /** Whether mirroring this composition left↔right is allowed. */
   mirrorable: boolean;
+  /** Force a colour mode from the grammar (e.g. signage always wants the signal ground). */
+  colorMode?: string;
   build: (c: Composer, content: PosterContent) => void;
 }
 
@@ -182,5 +185,5 @@ const editorial: Variant[] = [
   },
 ];
 
-export const STRATEGIES: Record<StrategyName, Variant[]> = { typographic, image, editorial };
-export const STRATEGY_NAMES: StrategyName[] = ['typographic', 'image', 'editorial'];
+/** Every strategy the engine knows. A grammar's `strategies` list picks which ones it uses. */
+export const STRATEGIES: Record<string, Variant[]> = { typographic, image, editorial, ...INDUSTRIAL };

@@ -9,12 +9,21 @@ export interface RoleSpec {
   uppercase: boolean;
   capHeight: number;
   descent: number;
+  /** letter-spacing in em */
+  tracking: number;
 }
 
 export function resolveRole(g: StyleGrammar, role: TextRoleName): RoleSpec {
   const r = g.typography.roles[role];
-  const family = g.typography.families[r.family as keyof typeof g.typography.families];
-  return { ...r, family };
+  if (!r) throw new Error(`Grammar "${g.id}" has no type role "${role}"`);
+  const family = g.typography.families[r.family] ?? r.family;
+  return { ...r, family, tracking: r.tracking ?? 0 };
+}
+
+/** Visible width of a line at a size, including letter-spacing between glyphs. */
+export function lineMeasurer(spec: RoleSpec, size: number, measureFn: MeasureFn) {
+  const ls = spec.tracking * size;
+  return (s: string) => measureFn(s, spec.family, spec.weight, size) + ls * Math.max(0, [...s].length - 1);
 }
 
 export interface FitOptions {
@@ -75,7 +84,7 @@ export function fitText(rawText: string, box: Rect, spec: RoleSpec, measureFn: M
   const candidates = sizes.length ? sizes : [spec.sizes[spec.sizes.length - 1]];
 
   for (const size of candidates) {
-    const measure = (s: string) => measureFn(s, spec.family, spec.weight, size);
+    const measure = lineMeasurer(spec, size, measureFn);
     const lines = wrap(text, box.w, measure);
     if (!lines || lines.length > maxLines) continue;
     const h = blockHeight(lines.length, size, spec);
@@ -84,7 +93,7 @@ export function fitText(rawText: string, box: Rect, spec: RoleSpec, measureFn: M
 
   // Fallback: smallest size, truncate with an ellipsis so nothing ever leaves the box.
   const size = candidates[candidates.length - 1];
-  const measure = (s: string) => measureFn(s, spec.family, spec.weight, size);
+  const measure = lineMeasurer(spec, size, measureFn);
   const lh = size * spec.lineHeight;
   const fitCount = Math.max(1, Math.min(maxLines, Math.floor((box.h - spec.capHeight * size - spec.descent * size) / lh) + 1));
   const lines = text.split('\n').flatMap((p) => hardWrap(p, box.w, measure)).slice(0, fitCount + 1);

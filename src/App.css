@@ -156,3 +156,11 @@ figcaption {
   font: 500 12px var(--mono);
   color: var(--muted);
 }
+
+select {
+  font: 500 12px var(--mono);
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  background: #f1efea;
+  color: var(--fg);
+}

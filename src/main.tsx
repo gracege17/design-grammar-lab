@@ -5,6 +5,9 @@ import '@fontsource/inter-tight/600.css';
 import '@fontsource/inter-tight/800.css';
 import '@fontsource/ibm-plex-mono/500.css';
 import '@fontsource/ibm-plex-mono/600.css';
+import '@fontsource/chakra-petch/500.css';
+import '@fontsource/chakra-petch/700.css';
+import '@fontsource/share-tech-mono/400.css';
 import App from './App.tsx';
 
 createRoot(document.getElementById('root')!).render(

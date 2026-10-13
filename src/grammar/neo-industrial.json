@@ -1,0 +1,110 @@
+{
+  "$comment": "Style Grammar extracted by hand from brasshands.com (studied Oct 2026). Rules only — no marks, logos or client brands are reproduced. All content is fictional.",
+  "id": "neo-industrial",
+  "name": "Neo-Industrial",
+  "version": 1,
+
+  "source": {
+    "reference": "https://brasshands.com",
+    "observations": [
+      "Near-black charcoal ground with fine grain and CRT scanline texture",
+      "One loud signal colour (industrial orange) on neutral greys; primaries only inside emblems",
+      "Squared techno display face, all caps; monospaced readouts with wide tracking",
+      "Information is framed as telemetry: UNIT IDs, STATUS fields, bracketed states, timecodes, coordinates",
+      "Corner registration marks, hairline frames, boxed status tags, slash runs, hazard stripes",
+      "Dense control-panel modules locked to a fine grid; small type floating in large dark fields",
+      "Glow, scanlines and dot-matrix lettering for screen-like moments"
+    ]
+  },
+
+  "canvas": { "width": 600, "height": 848 },
+
+  "grid": {
+    "columns": 8,
+    "rows": 10,
+    "margin": { "top": 32, "right": 32, "bottom": 32, "left": 32 },
+    "columnGutter": 8,
+    "rowGutter": 8,
+    "baseline": 4
+  },
+
+  "palette": {
+    "paper": "#DAD6CC",
+    "ink": "#141414",
+    "panel": "#1E1E1D",
+    "accents": [
+      { "color": "#F25A1D", "on": "ink" },
+      { "color": "#F25A1D", "on": "ink" },
+      { "color": "#EFC81A", "on": "ink" }
+    ]
+  },
+
+  "colorModes": [
+    { "id": "ink",    "weight": 6, "background": "ink",    "text": "paper", "accent": "accent" },
+    { "id": "accent", "weight": 3, "background": "accent", "text": "on",    "accent": "ink" },
+    { "id": "paper",  "weight": 2, "background": "paper",  "text": "ink",   "accent": "accent" }
+  ],
+
+  "surface": {
+    "$comment": "Post-processing applied to the whole poster.",
+    "grain": 0.07,
+    "scanlines": 0.06
+  },
+
+  "typography": {
+    "families": {
+      "display": "Chakra Petch",
+      "mono": "Share Tech Mono"
+    },
+    "roles": {
+      "display": { "family": "display", "weight": 700, "lineHeight": 0.92, "tracking": 0.01, "uppercase": true, "capHeight": 0.7, "descent": 0.12, "sizes": [168, 148, 130, 114, 100, 88, 78, 68, 60, 52, 46, 40] },
+      "numeral": { "family": "display", "weight": 700, "lineHeight": 0.86, "tracking": -0.01, "uppercase": true, "capHeight": 0.7, "descent": 0.05, "sizes": [220, 190, 160, 140, 120, 100, 84] },
+      "deck":    { "family": "display", "weight": 500, "lineHeight": 1.1,  "tracking": 0.04, "uppercase": true, "capHeight": 0.7, "descent": 0.14, "sizes": [26, 23, 20, 18, 16] },
+      "data":    { "family": "mono",    "weight": 400, "lineHeight": 1.25, "tracking": 0.06, "uppercase": true, "capHeight": 0.68, "descent": 0.2, "sizes": [30, 26, 22, 19, 16, 14] },
+      "body":    { "family": "mono",    "weight": 400, "lineHeight": 1.5,  "tracking": 0.02, "uppercase": true, "capHeight": 0.68, "descent": 0.2, "sizes": [11, 10.5, 10] },
+      "meta":    { "family": "mono",    "weight": 400, "lineHeight": 1.45, "tracking": 0.08, "uppercase": true, "capHeight": 0.68, "descent": 0.2, "sizes": [10.5, 10, 9.5, 9] }
+    },
+    "hierarchy": {
+      "displayToDeck": 2.2,
+      "deckToBody": 1.4
+    }
+  },
+
+  "motifs": {
+    "shapes": ["reticle", "chevrons", "barcode", "stripeddisc"],
+    "image": { "styles": ["scope", "linescreen"], "cell": 6 },
+    "ruleWeight": 1,
+    "textEffects": ["solid", "dotmatrix", "scanline"],
+    "frames": ["corners", "brackets"],
+    "slashes": "///////"
+  },
+
+  "rules": {
+    "minNegativeSpace": 0.15,
+    "maxElementsPerPoster": 28,
+    "headlineMaxLines": 3,
+    "allowMirroring": true
+  },
+
+  "strategies": ["dossier", "console", "signage"],
+
+  "series": {
+    "label": "Field Systems Division",
+    "subLabel": "Neo-Industrial Catalogue"
+  },
+
+  "content": [
+    { "code": "K-07", "name": "Kestrel", "headline": "Autonomous Survey Platform", "deck": "Long-range mapping for remote infrastructure", "status": "Deployed", "location": "Oakland — CA", "coords": "37.804N / 122.271W", "serial": "SN 2341-0907", "time": "01:30:55", "specs": "Mass|412 KG\nRange|80 KM\nUptime|99.4%\nRev|5.3", "body": "Continuous terrain capture across bridges, rail corridors and transmission lines. Hands-off operation, field-serviceable in under ten minutes." },
+    { "code": "A-12", "name": "Anvil", "headline": "Heavy Fabrication Cell", "deck": "Robotic welding at structural scale", "status": "Online", "location": "Pittsburgh — PA", "coords": "40.441N / 79.996W", "serial": "SN 1188-4410", "time": "06:12:04", "specs": "Payload|1,200 KG\nReach|4.2 M\nCycle|38 S\nRev|2.1", "body": "A modular cell for beam and plate work. Vision-guided seams, automatic fixture change, and a full weld log for every part produced." },
+    { "code": "H-03", "name": "Halcyon", "headline": "Grid-Scale Storage Unit", "deck": "Quiet power for the overnight load", "status": "Active", "location": "Reno — NV", "coords": "39.529N / 119.813W", "serial": "SN 7720-0031", "time": "23:59:10", "specs": "Capacity|4.8 MWH\nOutput|1.2 MW\nCycles|12,000\nRev|1.4", "body": "Containerised storage that ships, stacks and connects in a single day. Thermal management and telemetry are built into the shell." },
+    { "code": "M-21", "name": "Meridian", "headline": "Orbital Relay Terminal", "deck": "Ground station in a single crate", "status": "Tracking", "location": "Fairbanks — AK", "coords": "64.837N / 147.716W", "serial": "SN 0421-6620", "time": "04:44:18", "specs": "Dish|2.4 M\nBand|KA / X\nSlew|6 DEG/S\nRev|3.0", "body": "A deployable ground terminal that self-aligns on arrival and hands off between constellations without an operator on site." },
+    { "code": "F-09", "name": "Forge", "headline": "Additive Metal System", "deck": "Printed parts at production volume", "status": "Running", "location": "Detroit — MI", "coords": "42.331N / 83.045W", "serial": "SN 3390-1209", "time": "12:00:00", "specs": "Build|600 MM\nLayer|40 UM\nLasers|8\nRev|4.6", "body": "An eight-laser powder-bed system tuned for repeatable aerospace alloys, with in-situ melt-pool monitoring on every layer." },
+    { "code": "B-02", "name": "Bastion", "headline": "Perimeter Sensing Array", "deck": "Detection without line of sight", "status": "Armed", "location": "El Paso — TX", "coords": "31.761N / 106.485W", "serial": "SN 5502-0202", "time": "02:17:41", "specs": "Radius|3.5 KM\nNodes|48\nLatency|80 MS\nRev|2.8", "body": "A mesh of passive sensors that fuses seismic, acoustic and radio signatures into one clear picture of a site boundary." },
+    { "code": "L-15", "name": "Lodestar", "headline": "Inertial Navigation Core", "deck": "Position when the signal is gone", "status": "Calibrated", "location": "Huntsville — AL", "coords": "34.730N / 86.586W", "serial": "SN 8815-0115", "time": "09:05:33", "specs": "Drift|0.01 NM/H\nRate|400 HZ\nMass|2.1 KG\nRev|6.2", "body": "A sealed navigation module that holds its position estimate through long outages, built for vehicles that cannot rely on GPS." },
+    { "code": "V-40", "name": "Vector", "headline": "Autonomous Freight Tug", "deck": "Yard logistics, around the clock", "status": "Deployed", "location": "Long Beach — CA", "coords": "33.770N / 118.193W", "serial": "SN 4040-7718", "time": "24:00:00", "specs": "Tow|36 T\nShift|24 H\nCharge|45 MIN\nRev|1.9", "body": "An electric yard tractor that moves trailers between dock and gate on its own, coordinating with every other unit on site." },
+    { "code": "C-88", "name": "Corvid", "headline": "Compact Inspection Drone", "deck": "Confined spaces, zero entry permits", "status": "Ready", "location": "Houston — TX", "coords": "29.760N / 95.369W", "serial": "SN 6088-3401", "time": "00:24:07", "specs": "Span|280 MM\nFlight|22 MIN\nLidar|360 DEG\nRev|3.3", "body": "A caged inspection drone for tanks, boilers and tunnels. It maps the space in 3D while the crew stays outside." },
+    { "code": "I-31", "name": "Ironwood", "headline": "Modular Factory Frame", "deck": "Reconfigurable lines for new industry", "status": "Building", "location": "Columbus — OH", "coords": "39.961N / 82.998W", "serial": "SN 2231-0931", "time": "07:30:00", "specs": "Bay|12 M\nSwap|4 H\nStations|16\nRev|1.0", "body": "A standard structural and utility frame that lets a production line be rebuilt over a weekend instead of a quarter." },
+    { "code": "T-66", "name": "Tern", "headline": "Maritime Patrol Vessel", "deck": "Uncrewed watch on open water", "status": "Underway", "location": "San Diego — CA", "coords": "32.716N / 117.161W", "serial": "SN 9066-2210", "time": "18:46:02", "specs": "Length|8.4 M\nEndurance|30 D\nSpeed|28 KN\nRev|2.0", "body": "A solar-hybrid surface vessel that holds station for a month, reporting traffic and weather to shore in real time." },
+    { "code": "R-05", "name": "Rampart", "headline": "Hardened Edge Compute", "deck": "Inference where the cable ends", "status": "Online", "location": "Cheyenne — WY", "coords": "41.140N / 104.820W", "serial": "SN 1405-0505", "time": "11:11:11", "specs": "Compute|640 TOPS\nPower|1.8 KW\nRating|IP67\nRev|5.0", "body": "A sealed, fan-less compute node that runs vision models at remote sites, from substations to quarries, without a data centre." }
+  ]
+}

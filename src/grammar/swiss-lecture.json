@@ -1,5 +1,6 @@
 {
   "$comment": "Style Grammar v0 — the single source of design rules. Everything visual the engine decides is derived from this file.",
+  "id": "swiss-lecture",
   "name": "Swiss Lecture Series",
   "version": 1,
 
@@ -65,6 +66,8 @@
     "headlineMaxLines": 5,
     "allowMirroring": true
   },
+
+  "strategies": ["typographic", "image", "editorial"],
 
   "series": {
     "label": "Design Grammar Lab",

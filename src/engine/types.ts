@@ -1,11 +1,72 @@
 // Core types for the poster engine. Nothing here depends on React or p5.
 
-export type StyleGrammar = typeof import('../grammar/style-grammar.json');
+// ─── Style Grammar schema ─────────────────────────────────────────────────────
+// Every grammar JSON in src/grammar/ follows this shape. Phase 2 will produce these automatically.
 
-export type TextRoleName = 'display' | 'deck' | 'body' | 'meta' | 'numeral';
-export type StrategyName = 'typographic' | 'image' | 'editorial';
-export type ShapeName = 'circle' | 'half' | 'quarter' | 'bars' | 'dots' | 'arcs';
-export type ImageStyle = 'halftone' | 'linescreen';
+export interface RoleDef {
+  family: string; // key into typography.families
+  weight: number;
+  lineHeight: number;
+  sizes: number[]; // allowed sizes, largest first
+  uppercase: boolean;
+  capHeight: number; // em
+  descent: number; // em
+  tracking?: number; // letter-spacing in em
+}
+
+export interface ColorModeDef {
+  id: string;
+  weight: number;
+  background: string; // 'paper' | 'ink' | 'accent' | 'on' | 'panel'
+  text: string;
+  accent: string;
+}
+
+export interface StyleGrammar {
+  id: string;
+  name: string;
+  version: number;
+  source?: { reference?: string; observations?: string[] };
+  canvas: { width: number; height: number };
+  grid: {
+    columns: number;
+    rows: number;
+    margin: { top: number; right: number; bottom: number; left: number };
+    columnGutter: number;
+    rowGutter: number;
+    baseline: number;
+  };
+  palette: { paper: string; ink: string; panel?: string; accents: { color: string; on: string }[] };
+  colorModes: ColorModeDef[];
+  surface?: { grain?: number; scanlines?: number };
+  typography: {
+    families: Record<string, string>;
+    roles: Record<string, RoleDef>;
+    hierarchy: { displayToDeck: number; deckToBody: number };
+  };
+  motifs: {
+    shapes: string[];
+    image: { styles: string[]; cell: number };
+    ruleWeight: number;
+    textEffects?: string[];
+    frames?: string[];
+    slashes?: string;
+  };
+  rules: { minNegativeSpace: number; maxElementsPerPoster: number; headlineMaxLines: number; allowMirroring: boolean };
+  strategies: string[];
+  series: { label: string; subLabel: string };
+  content: Record<string, string>[];
+}
+
+// ─── Layout model ─────────────────────────────────────────────────────────────
+
+export type TextRoleName = string;
+export type StrategyName = string;
+export type ShapeName =
+  | 'circle' | 'half' | 'quarter' | 'bars' | 'dots' | 'arcs' // swiss
+  | 'reticle' | 'chevrons' | 'barcode' | 'stripeddisc'; // industrial
+export type ImageStyle = 'halftone' | 'linescreen' | 'scope';
+export type TextEffect = 'solid' | 'dotmatrix' | 'scanline' | 'glow';
 
 export interface Rect {
   x: number;
@@ -22,7 +83,7 @@ export interface GridArea {
   rowSpan: number;
 }
 
-/** Measure the advance width of `text` set in the given font. Injected by the host. */
+/** Measure the advance width of `text` set in the given font (no tracking). Injected by the host. */
 export type MeasureFn = (text: string, family: string, weight: number, size: number) => number;
 
 export interface ResolvedColors {
@@ -30,9 +91,11 @@ export interface ResolvedColors {
   background: string;
   text: string;
   accent: string;
-  /** Second ink used inside image duotones and panels. */
   ink: string;
   paper: string;
+  panel: string;
+  /** The raw accent hue, whatever role it plays in this mode. */
+  signal: string;
 }
 
 interface BaseElement {
@@ -50,10 +113,15 @@ export interface TextElement extends BaseElement {
   weight: number;
   size: number;
   lineHeight: number;
+  /** Letter spacing in px. */
+  tracking: number;
   /** y of the first baseline, absolute canvas coordinates */
   firstBaseline: number;
   color: string;
   align: 'left' | 'right';
+  effect: TextEffect;
+  /** Optional box drawn behind the text (status tags). */
+  box?: { rect: Rect; fill?: string; stroke?: string };
   /** True if the text could not fit even at the smallest allowed size and was truncated. */
   truncated: boolean;
   /** Actual ink bounds of the set text (widest line × block height). */
@@ -90,7 +158,37 @@ export interface RuleElement extends BaseElement {
   color: string;
 }
 
-export type PosterElement = TextElement | ShapeElement | ImageElement | PanelElement | RuleElement;
+/** Corner registration marks, brackets or a plain hairline box around an area. */
+export interface FrameElement extends BaseElement {
+  kind: 'frame';
+  style: 'corners' | 'brackets' | 'box';
+  color: string;
+}
+
+/** Diagonal hazard stripes. */
+export interface HatchElement extends BaseElement {
+  kind: 'hatch';
+  color: string;
+  stripe: number;
+}
+
+/** Fine square grid texture (graph paper / screen raster). */
+export interface GridFieldElement extends BaseElement {
+  kind: 'gridfield';
+  color: string;
+  cell: number;
+  alpha: number;
+}
+
+export type PosterElement =
+  | TextElement
+  | ShapeElement
+  | ImageElement
+  | PanelElement
+  | RuleElement
+  | FrameElement
+  | HatchElement
+  | GridFieldElement;
 
 export interface Diagnostics {
   truncatedText: string[];
@@ -103,23 +201,21 @@ export interface Diagnostics {
 
 export interface PosterLayout {
   seed: string;
+  grammarId: string;
   strategy: StrategyName;
   variant: string;
   mirrored: boolean;
   width: number;
   height: number;
   colors: ResolvedColors;
+  surface: { grain: number; scanlines: number };
   elements: PosterElement[];
   diagnostics: Diagnostics;
 }
 
-export interface PosterContent {
-  headline: string;
-  deck: string;
-  body: string;
-  date: string;
-  venue: string;
+/** Content fields come straight from the grammar's content entries, plus a few derived ones. */
+export type PosterContent = Record<string, string> & {
   issue: string;
   seriesLabel: string;
   seriesSubLabel: string;
-}
+};

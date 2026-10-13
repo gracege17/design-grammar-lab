@@ -41,7 +41,7 @@ export const PosterCard = forwardRef<PosterHandle, Props>(function PosterCard({ 
     };
   }, [layout, grid, showGrid]);
 
-  const fileName = `dgl-${String(index + 1).padStart(2, '0')}-${layout.strategy}-${layout.variant}-${layout.seed}`;
+  const fileName = `${layout.grammarId}-${String(index + 1).padStart(2, '0')}-${layout.strategy}-${layout.variant}-${layout.seed}`;
   useImperativeHandle(ref, () => ({ exportPng: (name = fileName) => sketchRef.current?.saveCanvas(name, 'png') }), [fileName]);
 
   const d = layout.diagnostics;
