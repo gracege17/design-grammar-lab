@@ -1,0 +1,160 @@
+{
+  "$comment": "Style Grammar v0 — the single source of design rules. Everything visual the engine decides is derived from this file.",
+  "name": "Swiss Lecture Series",
+  "version": 1,
+
+  "canvas": { "width": 600, "height": 848 },
+
+  "grid": {
+    "columns": 6,
+    "rows": 8,
+    "margin": { "top": 36, "right": 36, "bottom": 36, "left": 36 },
+    "columnGutter": 12,
+    "rowGutter": 12,
+    "baseline": 6
+  },
+
+  "palette": {
+    "paper": "#EEEAE2",
+    "ink": "#141414",
+    "accents": [
+      { "color": "#E2462A", "on": "ink" },
+      { "color": "#2348C8", "on": "paper" },
+      { "color": "#E8B92F", "on": "ink" }
+    ]
+  },
+
+  "colorModes": [
+    { "id": "paper",  "weight": 5, "background": "paper",  "text": "ink",   "accent": "accent" },
+    { "id": "ink",    "weight": 2, "background": "ink",    "text": "paper", "accent": "accent" },
+    { "id": "accent", "weight": 2, "background": "accent", "text": "on",    "accent": "paper" }
+  ],
+
+  "typography": {
+    "families": {
+      "display": "Inter Tight",
+      "text": "Inter Tight",
+      "mono": "IBM Plex Mono"
+    },
+    "roles": {
+      "display": { "family": "display", "weight": 800, "lineHeight": 0.9,  "sizes": [184, 160, 140, 124, 110, 98, 88, 78, 70, 62, 56, 50, 44], "uppercase": false, "capHeight": 0.73, "descent": 0.22 },
+      "deck":    { "family": "text",    "weight": 600, "lineHeight": 1.12, "sizes": [30, 26, 23, 20, 18],                                       "uppercase": false, "capHeight": 0.73, "descent": 0.22 },
+      "body":    { "family": "text",    "weight": 400, "lineHeight": 1.38, "sizes": [13, 12, 11],                                               "uppercase": false, "capHeight": 0.73, "descent": 0.22 },
+      "meta":    { "family": "mono",    "weight": 500, "lineHeight": 1.35, "sizes": [10.5, 10, 9.5],                                            "uppercase": true,  "capHeight": 0.7,  "descent": 0.24 },
+      "numeral": { "family": "display", "weight": 800, "lineHeight": 0.86, "sizes": [380, 340, 300, 260, 230, 200, 170],                        "uppercase": false, "capHeight": 0.73, "descent": 0.05 }
+    },
+    "hierarchy": {
+      "$comment": "Minimum ratio between adjacent levels, enforced by the validator.",
+      "displayToDeck": 2.2,
+      "deckToBody": 1.4
+    }
+  },
+
+  "motifs": {
+    "shapes": ["circle", "half", "quarter", "bars", "dots", "arcs"],
+    "image": {
+      "styles": ["halftone", "linescreen"],
+      "cell": 7
+    },
+    "ruleWeight": 1
+  },
+
+  "rules": {
+    "minNegativeSpace": 0.22,
+    "maxElementsPerPoster": 9,
+    "headlineMaxLines": 5,
+    "allowMirroring": true
+  },
+
+  "series": {
+    "label": "Design Grammar Lab",
+    "subLabel": "Lecture Series 2026/27"
+  },
+
+  "content": [
+    {
+      "headline": "Form Follows Feeling",
+      "deck": "On emotion as a structural material in visual communication",
+      "body": "A talk on how designers translate mood into measurable decisions — scale, interval, contrast — and why the most rigorous systems often begin with an intuition that refuses to be named.",
+      "date": "Thu 14 Nov 2026 — 19:00",
+      "venue": "Kunsthalle Annex, Hall\u00a03"
+    },
+    {
+      "headline": "Noise",
+      "deck": "Signal, texture and the productive error",
+      "body": "Printers, photocopiers and compression artefacts have quietly shaped two generations of graphic language. This evening looks at error as a design input rather than a defect.",
+      "date": "Thu 28 Nov 2026 — 19:00",
+      "venue": "Kunsthalle Annex, Hall\u00a03"
+    },
+    {
+      "headline": "The Measured City",
+      "deck": "Grids, plans and the politics of the right angle",
+      "body": "From Cerdà's Barcelona to the modular tower block, the grid has promised order and delivered control. An architectural historian and a typographer compare notes.",
+      "date": "Thu 12 Dec 2026 — 19:00",
+      "venue": "Stadtbibliothek, Auditorium"
+    },
+    {
+      "headline": "Notes on Silence",
+      "deck": "Negative space as content",
+      "body": "What is left out of a page is never empty. A close reading of posters, scores and book designs in which the unprinted area carries the argument.",
+      "date": "Thu 16 Jan 2027 — 19:00",
+      "venue": "Kunsthalle Annex, Hall\u00a03"
+    },
+    {
+      "headline": "Type Is a Voice",
+      "deck": "Letterforms between speech and image",
+      "body": "A conversation with three type designers about drawing alphabets for languages, screens and institutions — and about the moment a typeface starts speaking for itself.",
+      "date": "Thu 30 Jan 2027 — 19:00",
+      "venue": "Hochschule, Room\u00a00.14"
+    },
+    {
+      "headline": "Systems That Breathe",
+      "deck": "Flexible identities and generative rules",
+      "body": "Visual identities are no longer single marks but sets of behaviours. How do you write rules that stay recognisable while producing thousands of different outcomes?",
+      "date": "Thu 13 Feb 2027 — 19:00",
+      "venue": "Stadtbibliothek, Auditorium"
+    },
+    {
+      "headline": "Half Tone, Full Story",
+      "deck": "A short history of the printed dot",
+      "body": "The halftone screen made photographs printable and changed what newspapers, posters and record sleeves could say. A material history told through a single printing technique.",
+      "date": "Thu 27 Feb 2027 — 19:00",
+      "venue": "Druckwerkstatt, Hall\u00a0B"
+    },
+    {
+      "headline": "After the Modernists",
+      "deck": "What we kept, what we lost, what we should return",
+      "body": "Swiss style was exported as neutrality. A critical look at the international typographic style, its blind spots, and the designers rewriting its rules today.",
+      "date": "Thu 13 Mar 2027 — 19:00",
+      "venue": "Kunsthalle Annex, Hall\u00a03"
+    },
+    {
+      "headline": "Colour Without Permission",
+      "deck": "Clashes, accidents and chromatic rule-breaking",
+      "body": "When does a colour combination stop being wrong and start being a style? Examples from protest graphics, club flyers and the overprint experiments of the 1960s.",
+      "date": "Thu 27 Mar 2027 — 19:00",
+      "venue": "Hochschule, Room\u00a00.14"
+    },
+    {
+      "headline": "Reading Machines",
+      "deck": "Design for readers that are not human",
+      "body": "Barcodes, OCR fonts and today's vision models all read the page differently. What happens to graphic design when its audience includes software?",
+      "date": "Thu 10 Apr 2027 — 19:00",
+      "venue": "Stadtbibliothek, Auditorium"
+    },
+    {
+      "headline": "Slow Posters",
+      "deck": "Print in the age of the feed",
+      "body": "A poster on a wall is seen for weeks, not seconds. A plea for images that reward a second look, and for the patience required to make them.",
+      "date": "Thu 24 Apr 2027 — 19:00",
+      "venue": "Druckwerkstatt, Hall\u00a0B"
+    },
+    {
+      "headline": "The Shape of Things Not Yet Made",
+      "deck": "Speculative design and the future as material",
+      "body": "Prototypes, props and fictional objects let designers argue about futures before they arrive. An evening on design as a way of asking questions in public.",
+      "date": "Thu 08 May 2027 — 19:00",
+      "venue": "Kunsthalle Annex, Hall\u00a03"
+    }
+  ]
+}
