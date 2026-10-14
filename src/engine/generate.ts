@@ -78,7 +78,7 @@ export function generatePoster(req: PosterRequest, g: StyleGrammar, measure: Mea
     colors,
     surface: { grain: g.surface?.grain ?? 0, scanlines: g.surface?.scanlines ?? 0 },
     elements: composer.elements,
-    diagnostics: validate(composer.elements, width, height, strategy, g),
+    diagnostics: validate(composer.elements, width, height, strategy, g, grid),
   };
 }
 

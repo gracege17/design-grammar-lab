@@ -33,6 +33,8 @@ export interface FitOptions {
   maxSize?: number;
   /** Only consider sizes ≥ this (used to force the headline to dominate). */
   minSize?: number;
+  /** Baseline grid: every baseline lands on origin + k·unit, and leading becomes a multiple of unit. */
+  snap?: { unit: number; origin: number };
 }
 
 export interface FittedText {
@@ -73,8 +75,14 @@ function wrapParagraph(text: string, maxWidth: number, measure: (s: string) => n
   return lines;
 }
 
-function blockHeight(n: number, size: number, spec: RoleSpec): number {
-  return spec.capHeight * size + (n - 1) * size * spec.lineHeight + spec.descent * size;
+/** Leading in px, rounded to the baseline unit when a baseline grid is active. */
+function leading(size: number, spec: RoleSpec, snap?: FitOptions['snap']): number {
+  const lh = size * spec.lineHeight;
+  return snap ? Math.max(snap.unit, Math.round(lh / snap.unit) * snap.unit) : lh;
+}
+
+function blockHeight(n: number, size: number, spec: RoleSpec, snap?: FitOptions['snap']): number {
+  return spec.capHeight * size + (n - 1) * leading(size, spec, snap) + spec.descent * size;
 }
 
 export function fitText(rawText: string, box: Rect, spec: RoleSpec, measureFn: MeasureFn, opts: FitOptions = {}): FittedText {
@@ -87,27 +95,27 @@ export function fitText(rawText: string, box: Rect, spec: RoleSpec, measureFn: M
     const measure = lineMeasurer(spec, size, measureFn);
     const lines = wrap(text, box.w, measure);
     if (!lines || lines.length > maxLines) continue;
-    const h = blockHeight(lines.length, size, spec);
-    if (h <= box.h) return place(lines, size, spec, box, opts.vAlign ?? 'top', false);
+    const h = blockHeight(lines.length, size, spec, opts.snap);
+    // Snapping can shift the block by up to one unit, so leave that much slack.
+    if (h + (opts.snap?.unit ?? 0) <= box.h) return place(lines, size, spec, box, opts.vAlign ?? 'top', false, opts.snap);
   }
 
   // Fallback: smallest size, truncate with an ellipsis so nothing ever leaves the box.
   const size = candidates[candidates.length - 1];
   const measure = lineMeasurer(spec, size, measureFn);
-  const lh = size * spec.lineHeight;
+  const lh = leading(size, spec, opts.snap);
   const fitCount = Math.max(1, Math.min(maxLines, Math.floor((box.h - spec.capHeight * size - spec.descent * size) / lh) + 1));
   const lines = text.split('\n').flatMap((p) => hardWrap(p, box.w, measure)).slice(0, fitCount + 1);
-  let truncated = false;
-  if (lines.length > fitCount) {
-    lines.length = fitCount;
-    truncated = true;
-  }
-  if (truncated) {
+  // Reaching this fallback means a word was broken or text was cut: always report it.
+  let truncated = true;
+  const cut = lines.length > fitCount;
+  if (cut) lines.length = fitCount;
+  if (cut) {
     let last = lines[lines.length - 1];
     while (last.length > 0 && measure(`${last}…`) > box.w) last = last.slice(0, -1).trimEnd();
     lines[lines.length - 1] = `${last}…`;
   }
-  return place(lines, size, spec, box, opts.vAlign ?? 'top', truncated);
+  return place(lines, size, spec, box, opts.vAlign ?? 'top', truncated, opts.snap);
 }
 
 /** Wrap that breaks overlong words by character, used only in the fallback path. */
@@ -135,9 +143,24 @@ function hardWrap(text: string, maxWidth: number, measure: (s: string) => number
   return out;
 }
 
-function place(lines: string[], size: number, spec: RoleSpec, box: Rect, vAlign: 'top' | 'bottom', truncated: boolean): FittedText {
-  const lineHeight = size * spec.lineHeight;
-  const height = blockHeight(lines.length, size, spec);
-  const firstBaseline = vAlign === 'top' ? box.y + spec.capHeight * size : box.y + box.h - spec.descent * size - (lines.length - 1) * lineHeight;
+function place(lines: string[], size: number, spec: RoleSpec, box: Rect, vAlign: 'top' | 'bottom', truncated: boolean, snap?: FitOptions['snap']): FittedText {
+  const lineHeight = leading(size, spec, snap);
+  const height = blockHeight(lines.length, size, spec, snap);
+  const n = lines.length - 1;
+  let firstBaseline: number;
+  if (vAlign === 'top') {
+    firstBaseline = box.y + spec.capHeight * size;
+    if (snap) firstBaseline = snapTo(firstBaseline, snap, 'up'); // first baseline on the grid, below the box top
+  } else {
+    let last = box.y + box.h - spec.descent * size;
+    if (snap) last = snapTo(last, snap, 'down'); // last baseline on the grid, above the box bottom
+    firstBaseline = last - n * lineHeight;
+  }
   return { lines, size, lineHeight, firstBaseline, height, truncated };
+}
+
+function snapTo(y: number, snap: NonNullable<FitOptions['snap']>, dir: 'up' | 'down'): number {
+  const r = (y - snap.origin) / snap.unit;
+  const k = dir === 'up' ? Math.ceil(r - 1e-6) : Math.floor(r + 1e-6);
+  return snap.origin + k * snap.unit;
 }

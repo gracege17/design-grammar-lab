@@ -9,11 +9,14 @@
   "grid": {
     "columns": 6,
     "rows": 8,
-    "margin": { "top": 36, "right": 36, "bottom": 36, "left": 36 },
+    "margin": { "top": 30, "right": 30, "bottom": 30, "left": 30 },
     "columnGutter": 12,
     "rowGutter": 12,
-    "baseline": 6
+    "baseline": 4,
+    "lockToBaseline": true
   },
+
+  "spacing": { "tagPad": 6, "tableRow": 24, "posterFrameOutset": 15 },
 
   "palette": {
     "paper": "#EEEAE2",

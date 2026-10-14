@@ -35,6 +35,17 @@ export interface StyleGrammar {
     columnGutter: number;
     rowGutter: number;
     baseline: number;
+    /** Force module height + gutter to baseline multiples (row edges fall on the baseline grid). */
+    lockToBaseline?: boolean;
+  };
+  /** Spacing tokens. Layouts never use raw pixel numbers; they use these. */
+  spacing?: {
+    /** inner padding of status tags */
+    tagPad: number;
+    /** pitch of key/value table rows (should be a baseline multiple) */
+    tableRow: number;
+    /** how far a whole-poster frame sits outside the grid, into the margin */
+    posterFrameOutset: number;
   };
   palette: { paper: string; ink: string; panel?: string; accents: { color: string; on: string }[] };
   colorModes: ColorModeDef[];

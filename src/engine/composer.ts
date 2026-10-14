@@ -31,7 +31,7 @@ export interface TextOpts {
   maxSize?: number;
   effect?: TextEffect;
   /** Draw a box behind the text: a status tag. `fill` makes it solid, otherwise it is outlined. */
-  box?: { fill?: string; stroke?: string; pad?: number };
+  box?: { fill?: string; stroke?: string };
 }
 
 export class Composer {
@@ -54,6 +54,27 @@ export class Composer {
     this.rng = rng;
     this.measure = measure;
     this.mirrored = mirrored;
+  }
+
+  /** Spacing tokens with defaults derived from the grid. */
+  get space() {
+    const g = this.grid.spec;
+    return this.grammar.spacing ?? { tagPad: g.baseline + 2, tableRow: g.baseline * 7, posterFrameOutset: g.margin.left / 2 };
+  }
+
+  /**
+   * A tag's box hugs its module edge (top for top-aligned, bottom for bottom-aligned) and its
+   * far edge is snapped to the baseline grid, so boxes in the same row line up exactly.
+   */
+  private tagBox(bounds: Rect, module: Rect, pad: number, vAlign: 'top' | 'bottom'): Rect {
+    const x = bounds.x - pad;
+    const w = bounds.w + pad * 2;
+    if (vAlign === 'top') {
+      const bottom = this.grid.snapBaseline(bounds.y + bounds.h + pad, 'up');
+      return { x, y: module.y, w, h: bottom - module.y };
+    }
+    const top = this.grid.snapBaseline(bounds.y - pad, 'down');
+    return { x, y: top, w, h: module.y + module.h - top };
   }
 
   private id(prefix: string) {
@@ -80,6 +101,13 @@ export class Composer {
     return this.rng.pick(list);
   }
 
+  /** Dry run: would this text fit the area at an allowed size, without breaking words or cutting? */
+  fits(role: TextRoleName, content: string, logical: GridArea, opts: Pick<TextOpts, 'maxLines' | 'maxSize' | 'minSize'> = {}): boolean {
+    const r = this.grid.rect(this.place(logical));
+    const snap = { unit: this.grid.spec.baseline, origin: this.grid.baselineOrigin };
+    return !fitText(content, r, resolveRole(this.grammar, role), this.measure, { ...opts, snap }).truncated;
+  }
+
   text(role: TextRoleName, content: string, logical: GridArea, opts: TextOpts = {}) {
     const a = this.place(logical);
     // Mirrored layouts flip alignment so text keeps hugging the same side of its module.
@@ -90,7 +118,7 @@ export class Composer {
   /** Lower-level placement inside an explicit rect (used for table rows that subdivide a module). */
   textInRect(role: TextRoleName, content: string, a: GridArea, r: Rect, opts: TextOpts = {}) {
     const inset = opts.inset ?? {};
-    const pad = opts.box ? (opts.box.pad ?? 5) : 0;
+    const pad = opts.box ? this.space.tagPad : 0;
     const box: Rect = {
       x: r.x + (inset.left ?? 0) + pad,
       y: r.y + (inset.top ?? 0) + pad,
@@ -104,7 +132,8 @@ export class Composer {
     let maxSize = opts.maxSize;
     if (role === 'deck' && this.sizes.display) maxSize = Math.min(maxSize ?? Infinity, this.sizes.display / h.displayToDeck);
 
-    const fitted = fitText(content, box, spec, this.measure, { vAlign: opts.vAlign, maxLines: opts.maxLines, maxSize, minSize: opts.minSize });
+    const snap = { unit: this.grid.spec.baseline, origin: this.grid.baselineOrigin };
+    const fitted = fitText(content, box, spec, this.measure, { vAlign: opts.vAlign, maxLines: opts.maxLines, maxSize, minSize: opts.minSize, snap });
     this.sizes[role] = Math.max(this.sizes[role] ?? 0, fitted.size);
 
     const m = lineMeasurer(spec, fitted.size, this.measure);
@@ -129,7 +158,7 @@ export class Composer {
       color: opts.color ?? this.colors.text,
       align,
       effect: opts.effect ?? 'solid',
-      box: opts.box ? { rect: { x: bounds.x - pad, y: bounds.y - pad, w: bounds.w + pad * 2, h: bounds.h + pad * 2 }, fill: opts.box.fill, stroke: opts.box.stroke } : undefined,
+      box: opts.box ? { rect: this.tagBox(bounds, r, pad, opts.vAlign ?? 'top'), fill: opts.box.fill, stroke: opts.box.stroke } : undefined,
       truncated: fitted.truncated,
       bounds,
     });
@@ -144,9 +173,12 @@ export class Composer {
     const a = this.place(logical);
     const r = this.grid.rect(a);
     const rows = spec.split('\n').map((l) => l.split('|'));
-    const pitch = r.h / rows.length;
+    // Fixed rhythm from the grammar; only tightened (in whole baselines) if the rows can't fit.
+    const b = this.grid.spec.baseline;
+    let pitch = this.space.tableRow;
+    if (pitch * rows.length > r.h) pitch = Math.floor(r.h / rows.length / b) * b;
     rows.forEach(([k, v], i) => {
-      const row: Rect = { x: r.x, y: r.y + i * pitch, w: r.w, h: pitch - 6 };
+      const row: Rect = { x: r.x, y: r.y + i * pitch, w: r.w, h: pitch - b };
       this.textInRect('meta', k, a, { ...row, w: row.w * 0.45 }, { vAlign: 'bottom', color: opts.labelColor });
       const label = this.elements[this.elements.length - 1];
       this.textInRect('data', v ?? '', a, row, { vAlign: 'bottom', align: 'right', color: opts.valueColor, maxLines: 1, maxSize: 22 });
@@ -157,7 +189,7 @@ export class Composer {
         label.firstBaseline += dy;
         label.bounds = { ...label.bounds, y: label.bounds.y + dy };
       }
-      this.elements.push({ kind: 'rule', id: this.id('rule'), area: a, orientation: 'h', rect: { x: r.x, y: row.y + pitch - 2, w: r.w, h: 0 }, weight: 1, color: opts.ruleColor ?? this.colors.text });
+      this.elements.push({ kind: 'rule', id: this.id('rule'), area: a, orientation: 'h', rect: { x: r.x, y: r.y + (i + 1) * pitch, w: r.w, h: 0 }, weight: 1, color: opts.ruleColor ?? this.colors.text });
     });
   }
 
@@ -216,10 +248,14 @@ export class Composer {
     this.elements.push({ kind: 'panel', id: this.id('panel'), area: a, rect, color });
   }
 
-  /** Frame an area. `outset` pushes the frame into the surrounding gutter/margin. */
-  frame(logical: GridArea, style: FrameElement['style'], color = this.colors.text, outset = 0) {
+  /**
+   * Frame an area. 'module' puts the frame line in the middle of the surrounding gutter;
+   * 'poster' puts it in the margin at the grammar's posterFrameOutset.
+   */
+  frame(logical: GridArea, style: FrameElement['style'], color = this.colors.text, at: 'module' | 'poster' = 'module') {
     const a = this.place(logical);
     const r = this.grid.rect(a);
+    const outset = at === 'poster' ? this.space.posterFrameOutset : Math.min(this.grid.spec.columnGutter, this.grid.spec.rowGutter) / 2;
     const rect = { x: r.x - outset, y: r.y - outset, w: r.w + outset * 2, h: r.h + outset * 2 };
     this.elements.push({ kind: 'frame', id: this.id('frame'), area: a, rect, style, color });
   }

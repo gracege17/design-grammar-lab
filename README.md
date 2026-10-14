@@ -26,6 +26,19 @@ In the gallery:
 - **PNG** exports one poster at 1200×1696. **Export all PNG** downloads all ten.
 - **Grid overlay** shows the modules and each text block's ink bounds. Bounds are blue when they pass and red when the validator flags them.
 
+## Grid system
+
+Both grammars use a **baseline-locked modular grid** (`"lockToBaseline": true`):
+
+- Module height and gutter are whole multiples of the baseline (4px), and leftover height goes into the margins. Every row edge falls on the baseline grid.
+- Every line of text snaps to that baseline grid, and leading is rounded to whole baselines.
+- Spacing comes only from tokens in the grammar (`spacing.tagPad`, `spacing.tableRow`, `spacing.posterFrameOutset`). Layout code contains no raw pixel numbers; the type checker rejects them.
+- Frames sit in the middle of the gutter (`'module'`) or in the margin (`'poster'`). Tags hug their module edge, and their far edge is snapped to the baseline.
+- Layouts can ask `composer.fits(...)` before committing to a span, so they choose the widest option that keeps words whole.
+- The validator flags any text that is off the baseline, truncated, broken mid-word, overlapping, or out of bounds.
+
+![Before / after the baseline-locked grid](docs/grid-before-after.png)
+
 ## Where the design rules live
 
 | File | Controls |

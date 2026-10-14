@@ -135,18 +135,31 @@ function offscreen(p: p5, el: TextElement, density: number) {
   return { g, ox: b.x - m, oy: b.y - m };
 }
 
-/** Lettering made of lit cells, sampled from the real glyphs. */
+/**
+ * Lettering made of lit cells, sampled from the real glyphs. The cell lattice is anchored to the
+ * text's left edge and first baseline, so the dots sit on the same grid as the rest of the poster.
+ */
 function drawDotMatrix(p: p5, el: TextElement) {
-  const { g, ox, oy } = offscreen(p, el, 1);
+  const cell = Math.max(3, el.size / 14);
+  const b = el.bounds;
+  const m = el.size * 0.2;
+  const ox = b.x - Math.ceil(m / cell) * cell;
+  const oy = el.firstBaseline - Math.ceil((el.firstBaseline - b.y + m) / cell) * cell;
+  // Integer buffer size: a fractional width would skew the row stride when sampling pixels.
+  const gw = Math.ceil(Math.ceil((b.x + b.w + m - ox) / cell) * cell);
+  const gh = Math.ceil(Math.ceil((b.y + b.h + m - oy) / cell) * cell);
+  const g = p.createGraphics(gw, gh);
+  g.pixelDensity(1);
+  g.clear();
+  g.noStroke();
   g.fill(255);
   setLines(g, el, ox, oy);
   g.loadPixels();
-  const cell = Math.max(3, el.size / 14);
-  const w = g.width;
+  const w = gw;
   p.noStroke();
   p.fill(el.color);
   p.rectMode(p.CENTER);
-  for (let y = cell / 2; y < g.height; y += cell)
+  for (let y = cell / 2; y < gh; y += cell)
     for (let x = cell / 2; x < w; x += cell) {
       const i = (Math.floor(y) * w + Math.floor(x)) * 4 + 3;
       if (g.pixels[i] > 110) p.rect(ox + x, oy + y, cell * 0.78, cell * 0.78, cell * 0.25);
@@ -514,6 +527,10 @@ function drawGridOverlay(p: p5, layout: PosterLayout, grid: Grid) {
       const m = grid.rect({ col: c, row: r, colSpan: 1, rowSpan: 1 });
       p.rect(m.x, m.y, m.w, m.h);
     }
+  // baseline grid
+  p.stroke(0, 160, 255, 34);
+  p.strokeWeight(0.5);
+  for (let y = grid.baselineOrigin; y <= layout.height - grid.spec.margin.bottom + 0.5; y += grid.spec.baseline) p.line(grid.inner.x, y, grid.inner.x + grid.inner.w, y);
   p.noFill();
   p.strokeWeight(1);
   for (const el of layout.elements) {

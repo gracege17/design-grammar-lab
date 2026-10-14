@@ -10,6 +10,12 @@ export interface GridSpec {
   columnGutter: number;
   rowGutter: number;
   baseline: number;
+  /**
+   * When true the module height and gutter are forced to whole multiples of the baseline,
+   * and the leftover height is shared between top and bottom margins (treated as minimums).
+   * Every row edge then falls on the baseline grid.
+   */
+  lockToBaseline?: boolean;
 }
 
 export class Grid {
@@ -18,9 +24,22 @@ export class Grid {
   readonly rowHeight: number;
   readonly inner: Rect;
 
-  constructor(spec: GridSpec) {
-    this.spec = spec;
+  constructor(input: GridSpec) {
+    const b = input.baseline;
+    const spec: GridSpec = { ...input, margin: { ...input.margin } };
+    if (spec.lockToBaseline) spec.rowGutter = Math.max(b, Math.round(spec.rowGutter / b) * b);
     const { width, height, columns, rows, margin, columnGutter, rowGutter } = spec;
+    const availH = height - margin.top - margin.bottom;
+    let rowHeight = (availH - rowGutter * (rows - 1)) / rows;
+    if (spec.lockToBaseline) {
+      rowHeight = Math.floor(rowHeight / b) * b;
+      const extra = availH - rows * rowHeight - rowGutter * (rows - 1);
+      const top = Math.floor(extra / 2);
+      margin.top += top;
+      margin.bottom += extra - top;
+    }
+    this.spec = spec;
+    this.rowHeight = rowHeight;
     this.inner = {
       x: margin.left,
       y: margin.top,
@@ -28,7 +47,18 @@ export class Grid {
       h: height - margin.top - margin.bottom,
     };
     this.colWidth = (this.inner.w - columnGutter * (columns - 1)) / columns;
-    this.rowHeight = (this.inner.h - rowGutter * (rows - 1)) / rows;
+  }
+
+  /** The baseline grid starts at the top margin, so it coincides with every row edge. */
+  get baselineOrigin() {
+    return this.inner.y;
+  }
+
+  /** True if y lies on the baseline grid (within half a pixel). */
+  onBaseline(y: number): boolean {
+    const b = this.spec.baseline;
+    const r = (y - this.baselineOrigin) / b;
+    return Math.abs(r - Math.round(r)) * b < 0.5;
   }
 
   static fromGrammar(g: StyleGrammar): Grid {
@@ -80,10 +110,12 @@ export class Grid {
     return { ...a, col: this.columns - a.col - a.colSpan };
   }
 
-  /** Snap a y value down to the baseline grid. */
-  snapBaseline(y: number): number {
+  /** Snap a y value to the baseline grid ('up' = towards larger y). */
+  snapBaseline(y: number, dir: 'up' | 'down' | 'nearest' = 'nearest'): number {
     const b = this.spec.baseline;
-    return Math.round(y / b) * b;
+    const r = (y - this.baselineOrigin) / b;
+    const k = dir === 'up' ? Math.ceil(r - 1e-6) : dir === 'down' ? Math.floor(r + 1e-6) : Math.round(r);
+    return this.baselineOrigin + k * b;
   }
 
   private assertInside(a: GridArea) {

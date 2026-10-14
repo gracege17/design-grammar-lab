@@ -112,7 +112,9 @@ const image: Variant[] = [
     name: 'halfbleed',
     mirrorable: true,
     build(c, k) {
-      const span = c.rng.pick([3, 4]);
+      // A wide image only if the headline still fits the narrower text column.
+      const wide = c.fits('display', k.headline, area(0, 1, 2, 4), { maxLines: 6 });
+      const span = wide ? c.rng.pick([3, 4]) : 3;
       c.image(area(6 - span, 0, span, 8), { bleed: { top: true, right: true, bottom: true } });
       const tw = 6 - span;
       c.text('meta', seriesLine(k), area(0, 0, tw, 1));
@@ -145,13 +147,13 @@ const editorial: Variant[] = [
     name: 'column',
     mirrorable: true,
     build(c, k) {
-      c.text('meta', seriesLine(k), area(0, 0, 1, 2));
-      c.text('meta', metaLine(k), area(0, 6, 1, 2), { vAlign: 'bottom' });
-      c.ruleLeftOf(1, 0, 8);
-      c.text('display', k.headline, area(1, 0, 5, 3), { vAlign: 'top', maxLines: 4, maxSize: 124 });
-      c.image(area(2, 3, 4, 3));
-      c.text('deck', k.deck, area(1, 6, 2, 2), { vAlign: 'top' });
-      c.text('body', k.body, area(3, 6, 3, 2), { vAlign: 'top' });
+      c.text('meta', seriesLine(k), area(0, 0, 2, 2));
+      c.text('meta', metaLine(k), area(0, 6, 2, 2), { vAlign: 'bottom' });
+      c.ruleLeftOf(2, 0, 8);
+      c.text('display', k.headline, area(2, 0, 4, 3), { vAlign: 'top', maxLines: 4, maxSize: 124 });
+      c.image(area(3, 3, 3, 3));
+      c.text('deck', k.deck, area(2, 6, 2, 2), { vAlign: 'top' });
+      c.text('body', k.body, area(4, 6, 2, 2), { vAlign: 'top' });
     },
   },
   {
