@@ -32,7 +32,7 @@ const dossier: Variant[] = [
       c.frame(area(0, 0, 8, 10), frameStyle(c), c.colors.text, 'poster');
       c.text('meta', unit(k), area(0, 0, 2, 1), { vAlign: 'center', box: { stroke: c.colors.text } });
       c.text('meta', `${k.seriesLabel}\n${k.serial}`, area(2, 0, 3, 1), { vAlign: 'center' });
-      c.text('meta', `Status: ${k.status}`, area(5, 0, 3, 1), { vAlign: 'center', align: 'right', color: c.colors.background, box: { fill: c.colors.accent } });
+      c.text('meta', `Status: ${k.status}`, area(5, 0, 3, 1), { vAlign: 'center', align: 'right', color: c.colors.accent === c.colors.signal ? c.colors.ink : c.colors.background, box: { fill: c.colors.accent } });
       c.ruleAbove(1, 0, 8);
       c.text('display', k.name, area(0, 1, 8, 3), { vAlign: 'top', maxLines: 2, effect: c.pickEffect() });
       c.text('deck', k.headline, area(0, 4, 4, 1), { vAlign: 'top', maxLines: 2 });
@@ -158,4 +158,34 @@ const signage: Variant[] = [
   },
 ];
 
-export const INDUSTRIAL: Record<string, Variant[]> = { dossier, console: consoleV, signage };
+// ─── Blueprint: calm technical sheet (second reference) ──────────────────────
+
+const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+
+const blueprint: Variant[] = [
+  {
+    // Sentence-case grotesk over dashed section dividers, a technical drawing bleeding off the right.
+    name: 'drawing',
+    mirrorable: false,
+    colorMode: 'ink',
+    build(c, k) {
+      const dim = c.colors.dim;
+      for (const row of [1, 3, 6, 9]) c.ruleAbove(row, 0, 8, c.colors.text, { dash: true, bleed: true });
+      c.blueprint(area(5, 0, 3, 10), { top: true, right: true, bottom: true });
+
+      c.marker(area(0, 0, 1, 1), 'center');
+      c.text('statement', `${k.headline} — ${lowerFirst(k.deck)}.`, area(0, 1, 5, 2), { vAlign: 'top', maxLines: 3, color: dim });
+      c.text('headline', k.name, area(0, 3, 5, 2), { vAlign: 'center', maxLines: 1 });
+      c.marker(area(0, 5, 1, 1), 'top');
+      c.text('statement', k.location, area(0, 5, 5, 1), { vAlign: 'bottom', maxLines: 1, color: dim });
+      c.text('caption', `${k.body}\n\n${k.headline}, serial ${k.serial}. Field status: ${lowerFirst(k.status)}. Position ${k.coords}.`, area(0, 6, 3, 2), { vAlign: 'top', color: dim, inset: { top: (c.grid.spec.cell ?? 8) * 2 } });
+      c.marker(area(0, 9, 1, 1), 'center');
+      c.text('meta', `${unit(k)}  /  ${k.time}`, area(1, 9, 4, 1), { vAlign: 'center', color: dim });
+
+      c.textRotated('statement', `[ ${k.status} ]`, area(7, 0, 1, 3), { maxLines: 1, maxSize: 22 });
+      c.textRotated('caption', `${k.headline}. ${k.deck}.`, area(7, 3, 1, 2), { color: dim });
+    },
+  },
+];
+
+export const INDUSTRIAL: Record<string, Variant[]> = { dossier, console: consoleV, signage, blueprint };

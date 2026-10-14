@@ -13,7 +13,11 @@
       "Information is framed as telemetry: UNIT IDs, STATUS fields, bracketed states, timecodes, coordinates",
       "Corner registration marks, hairline frames, boxed status tags, slash runs, hazard stripes",
       "Dense control-panel modules locked to a fine grid; small type floating in large dark fields",
-      "Glow, scanlines and dot-matrix lettering for screen-like moments"
+      "Glow, scanlines and dot-matrix lettering for screen-like moments",
+      "Second register (Robotics poster): calm black field, sentence-case neo-grotesk headline, oversized grey statements",
+      "Full-bleed dashed dividers marking sections, white dots as section nodes on the left margin",
+      "White hairline technical drawing bleeding off the edge, dimension lines with arrowheads and orange numeric tags",
+      "Vertical bracketed status label and tiny rotated caption on the right edge; orange reserved for dimension tags"
     ]
   },
 
@@ -59,7 +63,8 @@
   "typography": {
     "families": {
       "display": "Chakra Petch",
-      "mono": "Share Tech Mono"
+      "mono": "Share Tech Mono",
+      "grotesk": "Inter Tight"
     },
     "roles": {
       "display": { "family": "display", "weight": 700, "lineHeight": 0.92, "tracking": 0.01, "uppercase": true, "capHeight": 0.7, "descent": 0.12, "sizes": [168, 148, 130, 114, 100, 88, 78, 68, 60, 52, 46, 40] },
@@ -67,6 +72,9 @@
       "deck":    { "family": "display", "weight": 500, "lineHeight": 1.1,  "tracking": 0.04, "uppercase": true, "capHeight": 0.7, "descent": 0.14, "sizes": [26, 23, 20, 18, 16] },
       "data":    { "family": "mono",    "weight": 400, "lineHeight": 1.25, "tracking": 0.06, "uppercase": true, "capHeight": 0.68, "descent": 0.2, "sizes": [30, 26, 22, 19, 16, 14] },
       "body":    { "family": "mono",    "weight": 400, "lineHeight": 1.5,  "tracking": 0.02, "uppercase": true, "capHeight": 0.68, "descent": 0.2, "sizes": [11, 10.5, 10] },
+      "headline":  { "family": "grotesk", "weight": 600, "lineHeight": 0.92, "tracking": -0.035, "uppercase": false, "capHeight": 0.73, "descent": 0.22, "sizes": [150, 132, 116, 104, 92, 82, 72, 64, 56] },
+      "statement": { "family": "grotesk", "weight": 600, "lineHeight": 1.0,  "tracking": -0.025, "uppercase": false, "capHeight": 0.73, "descent": 0.22, "sizes": [30, 28, 26, 24, 22, 20] },
+      "caption":   { "family": "grotesk", "weight": 400, "lineHeight": 1.4,  "tracking": 0,      "uppercase": false, "capHeight": 0.73, "descent": 0.22, "sizes": [9.5, 9, 8.5] },
       "meta":    { "family": "mono",    "weight": 400, "lineHeight": 1.45, "tracking": 0.08, "uppercase": true, "capHeight": 0.68, "descent": 0.2, "sizes": [10.5, 10, 9.5, 9] }
     },
     "hierarchy": {
@@ -92,7 +100,7 @@
     "allowMirroring": true
   },
 
-  "strategies": ["dossier", "console", "signage"],
+  "strategies": ["dossier", "console", "signage", "blueprint"],
 
   "series": {
     "label": "Field Systems Division",

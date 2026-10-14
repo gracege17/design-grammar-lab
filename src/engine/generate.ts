@@ -13,6 +13,13 @@ export interface PosterRequest {
   contentIndex?: number;
 }
 
+/** Linear mix of two #rrggbb colours: t = 0 → a, t = 1 → b. */
+function mix(a: string, b: string, t: number): string {
+  const p = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const [x, y] = [p(a), p(b)];
+  return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join('');
+}
+
 function resolveColors(g: StyleGrammar, rng: Rng, preferredMode?: string): ResolvedColors {
   const mode: ColorModeDef = g.colorModes.find((m) => m.id === preferredMode) ?? rng.weighted(g.colorModes);
   const accent = rng.pick(g.palette.accents);
@@ -36,6 +43,7 @@ function resolveColors(g: StyleGrammar, rng: Rng, preferredMode?: string): Resol
     paper: g.palette.paper,
     panel: g.palette.panel ?? g.palette.ink,
     signal: accent.color,
+    dim: mix(lookup(mode.text), lookup(mode.background), 0.6),
   };
 }
 

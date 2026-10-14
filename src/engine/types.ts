@@ -114,6 +114,8 @@ export interface ResolvedColors {
   panel: string;
   /** The raw accent hue, whatever role it plays in this mode. */
   signal: string;
+  /** Text colour pushed ~60% towards the background: secondary statements and captions. */
+  dim: string;
 }
 
 interface BaseElement {
@@ -140,6 +142,11 @@ export interface TextElement extends BaseElement {
   effect: TextEffect;
   /** Centred inside a tag box rather than sitting on the baseline grid (the box itself is on the grid). */
   centeredInBox?: boolean;
+  /**
+   * Set for vertical text: rect/firstBaseline are in the text's own (unrotated) frame, which is
+   * rotated 90° clockwise about `origin`. `bounds` stays in canvas coordinates.
+   */
+  rotation?: { angle: 90; origin: { x: number; y: number } };
   /** Optional box drawn behind the text (status tags). */
   box?: { rect: Rect; fill?: string; stroke?: string };
   /** True if the text could not fit even at the smallest allowed size and was truncated. */
@@ -179,6 +186,8 @@ export interface RuleElement extends BaseElement {
   weight: number;
   color: string;
   alpha: number;
+  /** Dash pattern in px, e.g. [4, 4]. */
+  dash?: number[];
 }
 
 /** Corner registration marks, brackets or a plain hairline box around an area. */
@@ -208,6 +217,21 @@ export interface GridFieldElement extends BaseElement {
   majorY: number[];
 }
 
+/** Procedural technical drawing with dimension annotations (blueprint strategy). */
+export interface BlueprintElement extends BaseElement {
+  kind: 'blueprint';
+  seed: number;
+  stroke: string;
+  /** Fill of the dimension tags. */
+  tag: string;
+  tagText: string;
+  family: string;
+  /** Drawing units per px, for the dimension numbers. */
+  scale: number;
+  /** Mirror the drawing (the dimension furniture moves to the other side). */
+  flip: boolean;
+}
+
 export type PosterElement =
   | TextElement
   | ShapeElement
@@ -216,7 +240,8 @@ export type PosterElement =
   | RuleElement
   | FrameElement
   | HatchElement
-  | GridFieldElement;
+  | GridFieldElement
+  | BlueprintElement;
 
 export interface Diagnostics {
   truncatedText: string[];

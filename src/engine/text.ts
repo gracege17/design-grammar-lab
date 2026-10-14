@@ -50,6 +50,10 @@ export interface FittedText {
 export function wrap(text: string, maxWidth: number, measure: (s: string) => number): string[] | null {
   const out: string[] = [];
   for (const para of text.split('\n')) {
+    if (!para.trim()) {
+      out.push(''); // blank line between paragraphs
+      continue;
+    }
     const lines = wrapParagraph(para, maxWidth, measure);
     if (!lines) return null;
     out.push(...lines);
@@ -152,7 +156,15 @@ function place(lines: string[], size: number, spec: RoleSpec, box: Rect, vAlign:
     // Optical centre: centre the cap-height block (caps + leading), ignoring descenders.
     const capBlock = spec.capHeight * size + n * lineHeight;
     firstBaseline = box.y + (box.h - capBlock) / 2 + spec.capHeight * size;
-    if (snap) firstBaseline = snapTo(firstBaseline, snap, 'nearest');
+    // Optical centring ignores descenders; keep the whole block (descenders included) inside the box.
+    const maxFirst = box.y + box.h - spec.descent * size - n * lineHeight;
+    const minFirst = box.y + spec.capHeight * size;
+    firstBaseline = Math.max(minFirst, Math.min(maxFirst, firstBaseline));
+    if (snap) {
+      firstBaseline = snapTo(firstBaseline, snap, 'nearest');
+      if (firstBaseline > maxFirst) firstBaseline = snapTo(maxFirst, snap, 'down');
+      if (firstBaseline < minFirst) firstBaseline = snapTo(minFirst, snap, 'up');
+    }
   } else if (vAlign === 'top') {
     firstBaseline = box.y + spec.capHeight * size;
     if (snap) firstBaseline = snapTo(firstBaseline, snap, 'up'); // first baseline on the grid, below the box top

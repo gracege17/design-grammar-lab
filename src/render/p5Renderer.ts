@@ -4,6 +4,7 @@ import type p5 from 'p5';
 import type { Grid } from '../engine/grid';
 import { hashSeed, Rng } from '../engine/random';
 import type {
+  BlueprintElement,
   FrameElement,
   GridFieldElement,
   HatchElement,
@@ -35,11 +36,18 @@ export function drawPoster(p: p5, layout: PosterLayout, opts: RenderOptions = {}
       case 'shape':
         drawShape(p, el);
         break;
-      case 'rule':
+      case 'rule': {
+        const ctx = p.drawingContext as CanvasRenderingContext2D;
         p.stroke(withAlpha(p, el.color, el.alpha));
         p.strokeWeight(el.weight);
         p.strokeCap(p.SQUARE);
+        if (el.dash) ctx.setLineDash(el.dash);
         p.line(el.rect.x, el.rect.y, el.rect.x + el.rect.w, el.rect.y + el.rect.h);
+        if (el.dash) ctx.setLineDash([]);
+        break;
+      }
+      case 'blueprint':
+        drawBlueprint(p, el);
         break;
       case 'frame':
         drawFrame(p, el);
@@ -86,6 +94,11 @@ function setLines(g: p5 | p5.Graphics, el: TextElement, ox = 0, oy = 0) {
 
 function drawText(p: p5, el: TextElement) {
   p.push();
+  if (el.rotation) {
+    // Vertical text: the element's rect/baseline live in its own frame, turned 90° clockwise.
+    p.translate(el.rotation.origin.x, el.rotation.origin.y);
+    p.rotate(Math.PI / 2);
+  }
   if (el.box) {
     const b = el.box.rect;
     if (el.box.fill) {
@@ -494,6 +507,146 @@ function drawScope(p: p5, el: ImageElement) {
     }
   }
   ctx.shadowBlur = 0;
+}
+
+// ─── Blueprint: a procedural mechanical drawing with dimension annotations ────
+
+function drawBlueprint(p: p5, el: BlueprintElement) {
+  const R = el.rect;
+  const rng = new Rng(el.seed);
+  const W = R.w;
+  const H = R.h;
+  const ctx = p.drawingContext as CanvasRenderingContext2D;
+  const ax = R.x + W * 0.46;
+  const solid = withAlpha(p, el.stroke, 0.92);
+  const faint = withAlpha(p, el.stroke, 0.5);
+  const dashed = (on: boolean) => ctx.setLineDash(on ? [5, 4] : []);
+  const units = (px: number) => Math.round((px * el.scale) / 10) * 10;
+
+  // proportions, all from the seed
+  const Rf = Math.min(W * 0.36, H * 0.14) * (0.9 + rng.next() * 0.1);
+  const by = R.y + H * (0.7 + rng.next() * 0.05);
+  const cw = Rf * (0.38 + rng.next() * 0.1);
+  const yc0 = R.y + H * (0.26 + rng.next() * 0.04);
+  const yj = R.y + H * (0.53 + rng.next() * 0.04);
+  const gp = yc0 - H * 0.075;
+  const jawH = H * (0.06 + rng.next() * 0.02);
+  const jawW = cw * (1.2 + rng.next() * 0.3);
+  const bolts = rng.pick([6, 8]);
+
+  p.push();
+  p.clip(() => p.rect(R.x, R.y, R.w, R.h));
+  p.noFill();
+  p.strokeWeight(1.2);
+  p.stroke(solid);
+
+  // mount rod from the top edge down to the palm
+  p.rect(ax - cw * 0.18, R.y - 2, cw * 0.36, gp - jawH - R.y + 2);
+  // gripper: palm + two jaws with pivots
+  p.rect(ax - jawW / 2, gp - H * 0.028, jawW, H * 0.028);
+  for (const s of [-1, 1]) {
+    const x0 = ax + (s * jawW) / 2;
+    p.beginShape();
+    p.vertex(x0, gp - H * 0.028);
+    p.vertex(x0 - s * cw * 0.05, gp - H * 0.028 - jawH);
+    p.vertex(x0 - s * cw * 0.3, gp - H * 0.028 - jawH);
+    p.vertex(x0 - s * cw * 0.22, gp - H * 0.028 - jawH * 0.4);
+    p.endShape();
+    p.circle(x0 - s * cw * 0.12, gp - H * 0.028 - jawH * 0.2, cw * 0.1);
+  }
+  // wrist + collar
+  p.rect(ax - cw * 0.3, gp, cw * 0.6, yc0 - gp);
+  p.rect(ax - cw * 0.5, yc0 - H * 0.012, cw, H * 0.012);
+  // column with bands
+  const colBottom = by - Rf; // the column stops at the flange rim
+  p.rect(ax - cw / 2, yc0, cw, colBottom - yc0);
+  for (let i = 1; i <= 3; i++) {
+    const y = yc0 + ((colBottom - yc0) * i) / 4;
+    p.line(ax - cw / 2, y, ax + cw / 2, y);
+  }
+  // joint housing with side blocks
+  const hw = Rf * 1.05;
+  const hh = H * 0.06;
+  p.rect(ax - hw / 2, yj - hh / 2, hw, hh);
+  p.rect(ax - hw / 2 - cw * 0.35, yj - hh * 0.3, cw * 0.35, hh * 0.6);
+  p.rect(ax + hw / 2, yj - hh * 0.3, cw * 0.35, hh * 0.6);
+  // base flange: rings, bolt circle, hub
+  p.circle(ax, by, Rf * 2);
+  p.circle(ax, by, Rf * 0.64);
+  p.circle(ax, by, Rf * 0.4);
+  p.stroke(faint);
+  dashed(true);
+  p.circle(ax, by, Rf * 1.56);
+  p.line(ax - Rf * 1.15, by, ax + Rf * 1.15, by);
+  p.line(ax, by - Rf * 1.15, ax, by + Rf * 1.15);
+  dashed(false);
+  p.stroke(solid);
+  for (let i = 0; i < bolts; i++) {
+    const a = (i / bolts) * Math.PI * 2 + Math.PI / bolts;
+    p.circle(ax + Math.cos(a) * Rf * 0.78, by + Math.sin(a) * Rf * 0.78, Rf * 0.1);
+  }
+
+  // ── dimensions ──
+  const arrow = (x: number, y: number, dir: 'l' | 'r' | 'u' | 'd') => {
+    const s = 5;
+    p.fill(solid);
+    p.noStroke();
+    if (dir === 'l') p.triangle(x, y, x + s, y - s * 0.55, x + s, y + s * 0.55);
+    if (dir === 'r') p.triangle(x, y, x - s, y - s * 0.55, x - s, y + s * 0.55);
+    if (dir === 'u') p.triangle(x, y, x - s * 0.55, y + s, x + s * 0.55, y + s);
+    if (dir === 'd') p.triangle(x, y, x - s * 0.55, y - s, x + s * 0.55, y - s);
+    p.noFill();
+    p.stroke(solid);
+  };
+  const tag = (label: string, cx: number, cy: number, vertical = false) => {
+    p.push();
+    p.translate(cx, cy);
+    if (vertical) p.rotate(Math.PI / 2);
+    p.textFont(el.family);
+    p.textSize(9);
+    p.textProperty('letterSpacing', '1px');
+    const w = p.textWidth(label) + 9;
+    p.noStroke();
+    p.fill(el.tag);
+    p.rect(-w / 2, -7, w, 14);
+    p.fill(el.tagText);
+    p.textAlign(p.CENTER, p.CENTER);
+    p.text(label, 0.5, 0);
+    p.pop();
+  };
+  const dimH = (x1: number, x2: number, y: number, label: string) => {
+    p.line(x1, y, x2, y);
+    arrow(x1, y, 'l');
+    arrow(x2, y, 'r');
+    p.line(x1, y - 5, x1, y + 5);
+    p.line(x2, y - 5, x2, y + 5);
+    tag(label, (x1 + x2) / 2, y);
+  };
+  const dimV = (x: number, y1: number, y2: number, label: string) => {
+    p.line(x, y1, x, y2);
+    arrow(x, y1, 'u');
+    arrow(x, y2, 'd');
+    p.line(x - 5, y1, x + 5, y1);
+    p.line(x - 5, y2, x + 5, y2);
+    tag(label, x, (y1 + y2) / 2, true);
+  };
+  p.strokeWeight(1);
+  const jawTop = gp - H * 0.028 - jawH;
+  dimH(ax - jawW / 2, ax + jawW / 2, jawTop - H * 0.03, `${units(jawW)}`);
+  dimV(ax - jawW / 2 - cw * 0.9, jawTop, yc0, `${units(yc0 - jawTop)}`);
+  dimV(ax - Rf * 1.15, yj - hh / 2, yj + hh / 2 + H * 0.02, `${units(hh)}`);
+  dimV(ax + Rf * 1.2, by - Rf, by + Rf, `${units(Rf * 2)}`);
+  const dimY = by + Rf * 1.25;
+  // bolt-circle diameter (the outer diameter is the BASE DIA tag below)
+  const bc = Rf * 0.78;
+  dimH(ax - bc, ax + bc, dimY, `${units(bc * 2)}`);
+  p.stroke(faint);
+  dashed(true);
+  p.line(ax - bc, by, ax - bc, dimY);
+  p.line(ax + bc, by, ax + bc, dimY);
+  dashed(false);
+  tag(`BASE DIA ${units(Rf * 2)}`, ax, dimY + 22);
+  p.pop();
 }
 
 // ─── Surface: scanlines + film grain over the whole poster ────────────────────

@@ -10,7 +10,7 @@ export function validate(elements: PosterElement[], width: number, height: numbe
   const warnings: string[] = [];
 
   const truncatedText = texts.filter((t) => t.truncated).map((t) => t.id);
-  const textOutOfBounds = texts.filter((t) => !inside(t.bounds, t.rect)).map((t) => t.id);
+  const textOutOfBounds = texts.filter((t) => !t.rotation && !inside(t.bounds, t.rect)).map((t) => t.id);
 
   const overlappingText: [string, string][] = [];
   for (let i = 0; i < texts.length; i++)
@@ -36,7 +36,7 @@ export function validate(elements: PosterElement[], width: number, height: numbe
   const hierarchyOk = (!deck || display / deck >= h.displayToDeck - 0.01) && (!deck || !body || deck / body >= h.deckToBody - 0.01);
 
   // Baseline grid: every line of every text block must sit on it.
-  const offBaseline = texts.filter((t) => !t.centeredInBox && t.lines.some((_, i) => !grid.onBaseline(t.firstBaseline + i * t.lineHeight))).map((t) => t.id);
+  const offBaseline = texts.filter((t) => !t.centeredInBox && !t.rotation && t.lines.some((_, i) => !grid.onBaseline(t.firstBaseline + i * t.lineHeight))).map((t) => t.id);
   if (offBaseline.length) warnings.push(`Off baseline: ${offBaseline.join(', ')}`);
 
   if (truncatedText.length) warnings.push(`Truncated: ${truncatedText.join(', ')}`);

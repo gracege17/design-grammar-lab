@@ -291,12 +291,95 @@ export class Composer {
     this.elements.push({ kind: 'gridfield', id: this.id('gridfield'), area: a, rect, color, cell, alpha, origin: { x: g.inner.x, y: g.inner.y }, majorX, majorY });
   }
 
-  /** Horizontal hairline in the gutter above `row`, spanning the given columns. */
-  ruleAbove(row: number, col: number, colSpan: number, color = this.colors.text) {
+  /**
+   * Horizontal hairline in the gutter above `row`, spanning the given columns.
+   * `bleed` runs it edge to edge across the canvas; `dash` uses a lattice-sized dash.
+   */
+  ruleAbove(row: number, col: number, colSpan: number, color = this.colors.text, opts: { dash?: boolean; bleed?: boolean } = {}) {
     const a = this.place({ col, row, colSpan, rowSpan: 1 });
     const r = this.grid.rect(a);
     const y = row === 0 ? r.y : r.y - this.grid.spec.rowGutter / 2;
-    this.elements.push({ kind: 'rule', id: this.id('rule'), area: a, orientation: 'h', rect: { x: r.x, y, w: r.w, h: 0 }, weight: this.grammar.motifs.ruleWeight, color, alpha: this.ruleAlpha });
+    const x = opts.bleed ? 0 : r.x;
+    const w = opts.bleed ? this.grid.spec.width : r.w;
+    const c = this.grid.spec.cell ?? this.grid.spec.baseline * 2;
+    this.elements.push({
+      kind: 'rule',
+      id: this.id('rule'),
+      area: a,
+      orientation: 'h',
+      rect: { x, y, w, h: 0 },
+      weight: this.grammar.motifs.ruleWeight,
+      color,
+      alpha: this.ruleAlpha,
+      dash: opts.dash ? [c / 2, c / 2] : undefined,
+    });
+  }
+
+  /** A solid dot (two lattice cells wide) on the area's leading edge — a section node. */
+  marker(logical: GridArea, anchor: 'top' | 'center' | 'bottom' = 'center', color = this.colors.text) {
+    const a = this.place(logical);
+    const r = this.grid.rect(a);
+    const d = (this.grid.spec.cell ?? 8) * 2;
+    const x = this.mirrored ? r.x + r.w - d : r.x;
+    const y = anchor === 'top' ? r.y : anchor === 'bottom' ? r.y + r.h - d : r.y + (r.h - d) / 2;
+    this.elements.push({ kind: 'shape', id: this.id('marker'), shape: 'circle', area: a, rect: { x, y, w: d, h: d }, orientation: 0, color, anchor: 'center' });
+  }
+
+  /**
+   * Vertical text reading top-to-bottom (rotated 90° clockwise); cap tops face the area's right edge.
+   * Layouts that use it are not mirrorable.
+   */
+  textRotated(role: TextRoleName, content: string, logical: GridArea, opts: Pick<TextOpts, 'color' | 'maxLines' | 'maxSize'> = {}) {
+    const a = this.place(logical);
+    const R = this.grid.rect(a);
+    const spec = resolveRole(this.grammar, role);
+    const local: Rect = { x: 0, y: 0, w: R.h, h: R.w };
+    const fitted = fitText(content, local, spec, this.measure, { vAlign: 'top', maxLines: opts.maxLines, maxSize: opts.maxSize });
+    const widest = Math.max(...fitted.lines.map(lineMeasurer(spec, fitted.size, this.measure)));
+    const lb = { x: 0, y: fitted.firstBaseline - spec.capHeight * fitted.size, w: widest, h: fitted.height };
+    // Local (lx, ly) → canvas (origin.x − ly, origin.y + lx): caps face the right edge.
+    const origin = { x: R.x + R.w, y: R.y };
+    const bounds = { x: origin.x - (lb.y + lb.h), y: R.y + lb.x, w: lb.h, h: lb.w };
+    this.elements.push({
+      kind: 'text',
+      id: this.id(role),
+      role,
+      area: a,
+      rect: local,
+      lines: fitted.lines,
+      family: spec.family,
+      weight: spec.weight,
+      size: fitted.size,
+      lineHeight: fitted.lineHeight,
+      tracking: spec.tracking * fitted.size,
+      firstBaseline: fitted.firstBaseline,
+      color: opts.color ?? this.colors.text,
+      align: 'left',
+      effect: 'solid',
+      truncated: fitted.truncated,
+      bounds,
+      rotation: { angle: 90, origin },
+    });
+  }
+
+  /** Procedural technical drawing with dimension tags, bleeding where the area touches the edge. */
+  blueprint(logical: GridArea, bleed: Sides = ALL) {
+    const a = this.place(logical);
+    const rect = this.grid.bleed(a, this.sides(bleed));
+    const mono = resolveRole(this.grammar, 'meta').family;
+    this.elements.push({
+      kind: 'blueprint',
+      id: this.id('blueprint'),
+      area: a,
+      rect,
+      seed: this.rng.int(0, 1_000_000),
+      stroke: this.colors.text,
+      tag: this.colors.signal,
+      tagText: this.colors.ink,
+      family: mono,
+      scale: this.rng.pick([2.5, 3, 4, 5]),
+      flip: this.mirrored,
+    });
   }
 
   /** Vertical hairline in the gutter left of `col`, spanning the given rows. */

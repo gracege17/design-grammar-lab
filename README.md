@@ -10,6 +10,10 @@ A generative poster engine. A **Style Grammar** (JSON) defines a visual language
 
 ![Neo-Industrial batch](docs/neo-industrial-preview.png)
 
+The **blueprint** strategy comes from a second reference: sentence-case grotesk, full-bleed dashed dividers with margin nodes, and a procedural technical drawing with dimension tags.
+
+![Blueprint example](docs/blueprint-example.png)
+
 ## Run
 
 ```bash
@@ -47,7 +51,7 @@ Both grammars use a **baseline-locked modular grid** (`"lockToBaseline": true`):
 | `src/grammar/index.ts` | The list of available grammars. |
 | `src/engine/types.ts` | The grammar schema (`StyleGrammar`) — the target format for Phase 2's automatic extraction. |
 | `src/engine/layouts.ts` | **Swiss compositions.** typographic, image, editorial (6×8 grid). |
-| `src/engine/layouts-industrial.ts` | **Industrial compositions.** dossier, console, signage (8×10 grid). |
+| `src/engine/layouts-industrial.ts` | **Industrial compositions.** dossier, console, signage, blueprint (8×10 grid on an 8px lattice). |
 | `src/engine/composer.ts` | Placement rules. Grid snapping, mirroring, bleeds, gutter rules, type hierarchy, status tags, spec tables, frames, hazard stripes, grid texture. |
 | `src/engine/text.ts` | Overflow prevention. Picks the largest size on the role's scale that fits the box, and truncates with an ellipsis only as a flagged last resort. |
 | `src/engine/validate.ts` | Checks after layout. Truncation, out-of-bounds text, text overlap, hierarchy ratios, and negative space. |
