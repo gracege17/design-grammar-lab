@@ -36,7 +36,7 @@ export function drawPoster(p: p5, layout: PosterLayout, opts: RenderOptions = {}
         drawShape(p, el);
         break;
       case 'rule':
-        p.stroke(el.color);
+        p.stroke(withAlpha(p, el.color, el.alpha));
         p.strokeWeight(el.weight);
         p.strokeCap(p.SQUARE);
         p.line(el.rect.x, el.rect.y, el.rect.x + el.rect.w, el.rect.y + el.rect.h);
@@ -228,16 +228,21 @@ function drawHatch(p: p5, el: HatchElement) {
   p.pop();
 }
 
+/** Lattice texture: lines every `cell` from the grid's origin; module edges drawn stronger. */
 function drawGridField(p: p5, el: GridFieldElement) {
   const { x, y, w, h } = el.rect;
+  const c = el.cell;
+  const x0 = el.origin.x - Math.floor((el.origin.x - x) / c) * c;
+  const y0 = el.origin.y - Math.floor((el.origin.y - y) / c) * c;
+  const isMajor = (v: number, majors: number[]) => majors.some((m) => Math.abs(m - v) < 0.5);
   p.push();
   p.strokeWeight(1);
-  for (let i = 0, gx = x; gx <= x + w + 0.5; gx += el.cell, i++) {
-    p.stroke(withAlpha(p, el.color, i % 5 === 0 ? el.alpha * 1.8 : el.alpha));
+  for (let gx = x0; gx <= x + w + 0.5; gx += c) {
+    p.stroke(withAlpha(p, el.color, isMajor(gx, el.majorX) ? el.alpha * 2 : el.alpha));
     p.line(gx, y, gx, y + h);
   }
-  for (let i = 0, gy = y; gy <= y + h + 0.5; gy += el.cell, i++) {
-    p.stroke(withAlpha(p, el.color, i % 5 === 0 ? el.alpha * 1.8 : el.alpha));
+  for (let gy = y0; gy <= y + h + 0.5; gy += c) {
+    p.stroke(withAlpha(p, el.color, isMajor(gy, el.majorY) ? el.alpha * 2 : el.alpha));
     p.line(x, gy, x + w, gy);
   }
   p.pop();
@@ -245,14 +250,16 @@ function drawGridField(p: p5, el: GridFieldElement) {
 
 // ─── Shapes: inscribed in a square snapped to the element's grid area ─────────
 
-function square(r: Rect): Rect {
+function square(r: Rect, anchor: 'bottom' | 'center'): Rect {
   const s = Math.min(r.w, r.h);
-  return { x: r.x, y: r.y + (r.h - s), w: s, h: s }; // sit on the area's bottom edge
+  return anchor === 'center'
+    ? { x: r.x, y: r.y + (r.h - s) / 2, w: s, h: s } // vertically centred in its module
+    : { x: r.x, y: r.y + (r.h - s), w: s, h: s }; // sit on the area's bottom edge
 }
 
 function drawShape(p: p5, el: ShapeElement) {
   if (el.shape === 'barcode') return drawBarcode(p, el);
-  const sq = square(el.rect);
+  const sq = square(el.rect, el.anchor);
   const s = sq.w;
   p.push();
   p.translate(sq.x + s / 2, sq.y + s / 2);

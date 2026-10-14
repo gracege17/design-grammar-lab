@@ -37,6 +37,11 @@ export interface StyleGrammar {
     baseline: number;
     /** Force module height + gutter to baseline multiples (row edges fall on the baseline grid). */
     lockToBaseline?: boolean;
+    /**
+     * Lattice cell (px). When set, module width/height, gutters, table rows and the grid-paper texture
+     * are all whole multiples of it, so every line in the poster can land on the same lattice.
+     */
+    cell?: number;
   };
   /** Spacing tokens. Layouts never use raw pixel numbers; they use these. */
   spacing?: {
@@ -59,6 +64,8 @@ export interface StyleGrammar {
     shapes: string[];
     image: { styles: string[]; cell: number };
     ruleWeight: number;
+    /** Opacity of hairline dividers (0–1). Lower values keep rules from competing with type. */
+    ruleAlpha?: number;
     textEffects?: string[];
     frames?: string[];
     slashes?: string;
@@ -131,6 +138,8 @@ export interface TextElement extends BaseElement {
   color: string;
   align: 'left' | 'right';
   effect: TextEffect;
+  /** Centred inside a tag box rather than sitting on the baseline grid (the box itself is on the grid). */
+  centeredInBox?: boolean;
   /** Optional box drawn behind the text (status tags). */
   box?: { rect: Rect; fill?: string; stroke?: string };
   /** True if the text could not fit even at the smallest allowed size and was truncated. */
@@ -145,6 +154,8 @@ export interface ShapeElement extends BaseElement {
   /** 0..3 quarter-turn orientation */
   orientation: number;
   color: string;
+  /** Where the square sits inside a non-square area. */
+  anchor: 'bottom' | 'center';
 }
 
 export interface ImageElement extends BaseElement {
@@ -167,6 +178,7 @@ export interface RuleElement extends BaseElement {
   orientation: 'h' | 'v';
   weight: number;
   color: string;
+  alpha: number;
 }
 
 /** Corner registration marks, brackets or a plain hairline box around an area. */
@@ -189,6 +201,11 @@ export interface GridFieldElement extends BaseElement {
   color: string;
   cell: number;
   alpha: number;
+  /** Lattice origin — the grid's inner top-left — so texture lines coincide with module edges. */
+  origin: { x: number; y: number };
+  /** Module and gutter edges, drawn slightly stronger than the plain lattice. */
+  majorX: number[];
+  majorY: number[];
 }
 
 export type PosterElement =

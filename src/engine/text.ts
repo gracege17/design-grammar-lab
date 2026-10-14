@@ -28,7 +28,7 @@ export function lineMeasurer(spec: RoleSpec, size: number, measureFn: MeasureFn)
 
 export interface FitOptions {
   maxLines?: number;
-  vAlign?: 'top' | 'bottom';
+  vAlign?: 'top' | 'bottom' | 'center';
   /** Only consider sizes ≤ this (used to enforce hierarchy against a larger sibling). */
   maxSize?: number;
   /** Only consider sizes ≥ this (used to force the headline to dominate). */
@@ -143,12 +143,17 @@ function hardWrap(text: string, maxWidth: number, measure: (s: string) => number
   return out;
 }
 
-function place(lines: string[], size: number, spec: RoleSpec, box: Rect, vAlign: 'top' | 'bottom', truncated: boolean, snap?: FitOptions['snap']): FittedText {
+function place(lines: string[], size: number, spec: RoleSpec, box: Rect, vAlign: 'top' | 'bottom' | 'center', truncated: boolean, snap?: FitOptions['snap']): FittedText {
   const lineHeight = leading(size, spec, snap);
   const height = blockHeight(lines.length, size, spec, snap);
   const n = lines.length - 1;
   let firstBaseline: number;
-  if (vAlign === 'top') {
+  if (vAlign === 'center') {
+    // Optical centre: centre the cap-height block (caps + leading), ignoring descenders.
+    const capBlock = spec.capHeight * size + n * lineHeight;
+    firstBaseline = box.y + (box.h - capBlock) / 2 + spec.capHeight * size;
+    if (snap) firstBaseline = snapTo(firstBaseline, snap, 'nearest');
+  } else if (vAlign === 'top') {
     firstBaseline = box.y + spec.capHeight * size;
     if (snap) firstBaseline = snapTo(firstBaseline, snap, 'up'); // first baseline on the grid, below the box top
   } else {
@@ -159,8 +164,8 @@ function place(lines: string[], size: number, spec: RoleSpec, box: Rect, vAlign:
   return { lines, size, lineHeight, firstBaseline, height, truncated };
 }
 
-function snapTo(y: number, snap: NonNullable<FitOptions['snap']>, dir: 'up' | 'down'): number {
+function snapTo(y: number, snap: NonNullable<FitOptions['snap']>, dir: 'up' | 'down' | 'nearest'): number {
   const r = (y - snap.origin) / snap.unit;
-  const k = dir === 'up' ? Math.ceil(r - 1e-6) : Math.floor(r + 1e-6);
+  const k = dir === 'up' ? Math.ceil(r - 1e-6) : dir === 'down' ? Math.floor(r + 1e-6) : Math.round(r);
   return snap.origin + k * snap.unit;
 }

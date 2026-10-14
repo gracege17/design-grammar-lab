@@ -21,7 +21,7 @@ type Sides = { top?: boolean; right?: boolean; bottom?: boolean; left?: boolean 
 const ALL: Sides = { top: true, right: true, bottom: true, left: true };
 
 export interface TextOpts {
-  vAlign?: 'top' | 'bottom';
+  vAlign?: 'top' | 'bottom' | 'center';
   align?: 'left' | 'right';
   maxLines?: number;
   color?: string;
@@ -62,19 +62,22 @@ export class Composer {
     return this.grammar.spacing ?? { tagPad: g.baseline + 2, tableRow: g.baseline * 7, posterFrameOutset: g.margin.left / 2 };
   }
 
+  /** Opacity for hairline rules. */
+  get ruleAlpha() {
+    return this.grammar.motifs.ruleAlpha ?? 1;
+  }
+
   /**
-   * A tag's box hugs its module edge (top for top-aligned, bottom for bottom-aligned) and its
-   * far edge is snapped to the baseline grid, so boxes in the same row line up exactly.
+   * A tag's box: its height is the cap block plus equal padding, rounded up to whole baselines,
+   * and it hugs the module's top, bottom or centre. Returns the box and the baseline that centres
+   * the caps inside it — equal space above and below.
    */
-  private tagBox(bounds: Rect, module: Rect, pad: number, vAlign: 'top' | 'bottom'): Rect {
-    const x = bounds.x - pad;
-    const w = bounds.w + pad * 2;
-    if (vAlign === 'top') {
-      const bottom = this.grid.snapBaseline(bounds.y + bounds.h + pad, 'up');
-      return { x, y: module.y, w, h: bottom - module.y };
-    }
-    const top = this.grid.snapBaseline(bounds.y - pad, 'down');
-    return { x, y: top, w, h: module.y + module.h - top };
+  private tagBox(capBlock: number, capH: number, widest: number, textX: number, module: Rect, pad: number, vAlign: 'top' | 'bottom' | 'center') {
+    const b = this.grid.spec.baseline;
+    const h = Math.ceil((capBlock + pad * 2) / b - 1e-6) * b;
+    const y = vAlign === 'top' ? module.y : vAlign === 'bottom' ? module.y + module.h - h : this.grid.snapBaseline(module.y + (module.h - h) / 2);
+    const rect = { x: textX - pad, y, w: widest + pad * 2, h };
+    return { rect, firstBaseline: y + (h - capBlock) / 2 + capH };
   }
 
   private id(prefix: string) {
@@ -139,8 +142,15 @@ export class Composer {
     const m = lineMeasurer(spec, fitted.size, this.measure);
     const widest = Math.max(...fitted.lines.map(m));
     const align = opts.align ?? 'left';
-    const top = fitted.firstBaseline - spec.capHeight * fitted.size;
     const bx = align === 'right' ? box.x + box.w - widest : box.x;
+    const capH = spec.capHeight * fitted.size;
+    let tag: { rect: Rect; firstBaseline: number } | undefined;
+    if (opts.box) {
+      const capBlock = capH + (fitted.lines.length - 1) * fitted.lineHeight;
+      tag = this.tagBox(capBlock, capH, widest, bx, r, pad, opts.vAlign ?? 'top');
+      fitted.firstBaseline = tag.firstBaseline;
+    }
+    const top = fitted.firstBaseline - capH;
     const bounds = { x: bx, y: top, w: widest, h: fitted.height };
     this.elements.push({
       kind: 'text',
@@ -158,7 +168,8 @@ export class Composer {
       color: opts.color ?? this.colors.text,
       align,
       effect: opts.effect ?? 'solid',
-      box: opts.box ? { rect: this.tagBox(bounds, r, pad, opts.vAlign ?? 'top'), fill: opts.box.fill, stroke: opts.box.stroke } : undefined,
+      box: tag && opts.box ? { rect: tag.rect, fill: opts.box.fill, stroke: opts.box.stroke } : undefined,
+      centeredInBox: !!tag,
       truncated: fitted.truncated,
       bounds,
     });
@@ -166,8 +177,8 @@ export class Composer {
   }
 
   /**
-   * Key / value table ("Mass|412 KG" per line). Rows are spaced evenly down the area,
-   * labels flush left, values flush right, a hairline under every row.
+   * Key / value table ("Mass|412 KG" per line). Rows run on a fixed pitch (a lattice multiple) from
+   * the module top; label and value share one baseline, centred between the dividers.
    */
   table(spec: string, logical: GridArea, opts: { labelColor?: string; valueColor?: string; ruleColor?: string } = {}) {
     const a = this.place(logical);
@@ -178,10 +189,11 @@ export class Composer {
     let pitch = this.space.tableRow;
     if (pitch * rows.length > r.h) pitch = Math.floor(r.h / rows.length / b) * b;
     rows.forEach(([k, v], i) => {
-      const row: Rect = { x: r.x, y: r.y + i * pitch, w: r.w, h: pitch - b };
-      this.textInRect('meta', k, a, { ...row, w: row.w * 0.45 }, { vAlign: 'bottom', color: opts.labelColor });
+      const row: Rect = { x: r.x, y: r.y + i * pitch, w: r.w, h: pitch };
+      this.textInRect('meta', k, a, { ...row, w: row.w * 0.45 }, { vAlign: 'center', color: opts.labelColor, maxLines: 1 });
       const label = this.elements[this.elements.length - 1];
-      this.textInRect('data', v ?? '', a, row, { vAlign: 'bottom', align: 'right', color: opts.valueColor, maxLines: 1, maxSize: 22 });
+      // Value caps take at most ~half the row, leaving equal clear space above and below.
+      this.textInRect('data', v ?? '', a, row, { vAlign: 'center', align: 'right', color: opts.valueColor, maxLines: 1, maxSize: pitch * 0.55 });
       const value = this.elements[this.elements.length - 1];
       // Share one baseline: the value's (larger size) baseline wins, the label moves up to meet it.
       if (label.kind === 'text' && value.kind === 'text' && label.lines.length === 1) {
@@ -189,17 +201,17 @@ export class Composer {
         label.firstBaseline += dy;
         label.bounds = { ...label.bounds, y: label.bounds.y + dy };
       }
-      this.elements.push({ kind: 'rule', id: this.id('rule'), area: a, orientation: 'h', rect: { x: r.x, y: r.y + (i + 1) * pitch, w: r.w, h: 0 }, weight: 1, color: opts.ruleColor ?? this.colors.text });
+      this.elements.push({ kind: 'rule', id: this.id('rule'), area: a, orientation: 'h', rect: { x: r.x, y: r.y + (i + 1) * pitch, w: r.w, h: 0 }, weight: this.grammar.motifs.ruleWeight, color: opts.ruleColor ?? this.colors.text, alpha: this.ruleAlpha });
     });
   }
 
-  shape(shape: ShapeName, logical: GridArea, color = this.colors.accent, orientation?: number) {
+  shape(shape: ShapeName, logical: GridArea, color = this.colors.accent, orientation?: number, anchor: 'bottom' | 'center' = 'bottom') {
     const a = this.place(logical);
     let o = orientation ?? this.rng.int(0, 3);
     // Mirror the orientation too, so mirrored layouts stay coherent.
     // Only corner-anchored shapes change under a left↔right mirror.
     if (this.mirrored && orientation !== undefined && (shape === 'quarter' || shape === 'arcs')) o = [1, 0, 3, 2][o];
-    this.elements.push({ kind: 'shape', id: this.id('shape'), shape, area: a, rect: this.grid.rect(a), orientation: o, color });
+    this.elements.push({ kind: 'shape', id: this.id('shape'), shape, area: a, rect: this.grid.rect(a), orientation: o, color, anchor });
   }
 
   image(
@@ -265,11 +277,18 @@ export class Composer {
     this.elements.push({ kind: 'hatch', id: this.id('hatch'), area: a, rect: this.grid.rect(a), color, stripe });
   }
 
-  /** Graph-paper texture. With bleed the field runs to the canvas edges. */
-  gridfield(logical: GridArea, color = this.colors.text, cell = 12, alpha = 0.14, bleed = false) {
+  /**
+   * Graph-paper texture on the grid's own lattice: cell = grid.cell, origin = the grid's inner corner,
+   * so texture lines coincide with module edges, gutter centres and table dividers.
+   */
+  gridfield(logical: GridArea, color = this.colors.text, alpha = 0.14, bleed = false) {
     const a = this.place(logical);
     const rect = bleed ? this.grid.bleed(a) : this.grid.rect(a);
-    this.elements.push({ kind: 'gridfield', id: this.id('gridfield'), area: a, rect, color, cell, alpha });
+    const g = this.grid;
+    const cell = g.spec.cell ?? g.spec.baseline * 3;
+    const majorX = Array.from({ length: g.columns }, (_, c) => [g.colX(c), g.colX(c) + g.colWidth]).flat();
+    const majorY = Array.from({ length: g.rows }, (_, r) => [g.rowY(r), g.rowY(r) + g.rowHeight]).flat();
+    this.elements.push({ kind: 'gridfield', id: this.id('gridfield'), area: a, rect, color, cell, alpha, origin: { x: g.inner.x, y: g.inner.y }, majorX, majorY });
   }
 
   /** Horizontal hairline in the gutter above `row`, spanning the given columns. */
@@ -277,7 +296,7 @@ export class Composer {
     const a = this.place({ col, row, colSpan, rowSpan: 1 });
     const r = this.grid.rect(a);
     const y = row === 0 ? r.y : r.y - this.grid.spec.rowGutter / 2;
-    this.elements.push({ kind: 'rule', id: this.id('rule'), area: a, orientation: 'h', rect: { x: r.x, y, w: r.w, h: 0 }, weight: this.grammar.motifs.ruleWeight, color });
+    this.elements.push({ kind: 'rule', id: this.id('rule'), area: a, orientation: 'h', rect: { x: r.x, y, w: r.w, h: 0 }, weight: this.grammar.motifs.ruleWeight, color, alpha: this.ruleAlpha });
   }
 
   /** Vertical hairline in the gutter left of `col`, spanning the given rows. */
@@ -288,6 +307,6 @@ export class Composer {
     const r = this.grid.rect(a);
     const g = this.grid.spec.columnGutter / 2;
     const x = this.mirrored ? r.x + r.w + g : r.x - g;
-    this.elements.push({ kind: 'rule', id: this.id('rule'), area: a, orientation: 'v', rect: { x, y: r.y, w: 0, h: r.h }, weight: this.grammar.motifs.ruleWeight, color });
+    this.elements.push({ kind: 'rule', id: this.id('rule'), area: a, orientation: 'v', rect: { x, y: r.y, w: 0, h: r.h }, weight: this.grammar.motifs.ruleWeight, color, alpha: this.ruleAlpha });
   }
 }

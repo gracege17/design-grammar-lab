@@ -16,6 +16,8 @@ export interface GridSpec {
    * Every row edge then falls on the baseline grid.
    */
   lockToBaseline?: boolean;
+  /** Lattice cell (px) shared by modules, gutters, tables and grid texture. */
+  cell?: number;
 }
 
 export class Grid {

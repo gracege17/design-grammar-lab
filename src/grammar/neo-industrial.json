@@ -22,14 +22,16 @@
   "grid": {
     "columns": 8,
     "rows": 10,
-    "margin": { "top": 28, "right": 30, "bottom": 28, "left": 30 },
-    "columnGutter": 12,
-    "rowGutter": 12,
+    "$comment": "8px lattice: module 56x64 (7x8 cells), gutter 16 (2 cells), rows 32 (4 cells). Every edge is a lattice line.",
+    "cell": 8,
+    "margin": { "top": 32, "right": 20, "bottom": 32, "left": 20 },
+    "columnGutter": 16,
+    "rowGutter": 16,
     "baseline": 4,
     "lockToBaseline": true
   },
 
-  "spacing": { "tagPad": 6, "tableRow": 28, "posterFrameOutset": 15 },
+  "spacing": { "tagPad": 6, "tableRow": 32, "posterFrameOutset": 8 },
 
   "palette": {
     "paper": "#DAD6CC",
@@ -77,6 +79,7 @@
     "shapes": ["reticle", "chevrons", "barcode", "stripeddisc"],
     "image": { "styles": ["scope", "linescreen"], "cell": 6 },
     "ruleWeight": 1,
+    "ruleAlpha": 0.32,
     "textEffects": ["solid", "dotmatrix", "scanline"],
     "frames": ["corners", "brackets"],
     "slashes": "///////"

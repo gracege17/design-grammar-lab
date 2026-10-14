@@ -36,7 +36,7 @@ export function validate(elements: PosterElement[], width: number, height: numbe
   const hierarchyOk = (!deck || display / deck >= h.displayToDeck - 0.01) && (!deck || !body || deck / body >= h.deckToBody - 0.01);
 
   // Baseline grid: every line of every text block must sit on it.
-  const offBaseline = texts.filter((t) => t.lines.some((_, i) => !grid.onBaseline(t.firstBaseline + i * t.lineHeight))).map((t) => t.id);
+  const offBaseline = texts.filter((t) => !t.centeredInBox && t.lines.some((_, i) => !grid.onBaseline(t.firstBaseline + i * t.lineHeight))).map((t) => t.id);
   if (offBaseline.length) warnings.push(`Off baseline: ${offBaseline.join(', ')}`);
 
   if (truncatedText.length) warnings.push(`Truncated: ${truncatedText.join(', ')}`);

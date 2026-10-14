@@ -30,9 +30,9 @@ const dossier: Variant[] = [
     mirrorable: true,
     build(c, k) {
       c.frame(area(0, 0, 8, 10), frameStyle(c), c.colors.text, 'poster');
-      c.text('meta', unit(k), area(0, 0, 2, 1), { box: { stroke: c.colors.text } });
-      c.text('meta', `${k.seriesLabel}\n${k.serial}`, area(2, 0, 3, 1));
-      c.text('meta', `Status: ${k.status}`, area(5, 0, 3, 1), { align: 'right', color: c.colors.background, box: { fill: c.colors.accent } });
+      c.text('meta', unit(k), area(0, 0, 2, 1), { vAlign: 'center', box: { stroke: c.colors.text } });
+      c.text('meta', `${k.seriesLabel}\n${k.serial}`, area(2, 0, 3, 1), { vAlign: 'center' });
+      c.text('meta', `Status: ${k.status}`, area(5, 0, 3, 1), { vAlign: 'center', align: 'right', color: c.colors.background, box: { fill: c.colors.accent } });
       c.ruleAbove(1, 0, 8);
       c.text('display', k.name, area(0, 1, 8, 3), { vAlign: 'top', maxLines: 2, effect: c.pickEffect() });
       c.text('deck', k.headline, area(0, 4, 4, 1), { vAlign: 'top', maxLines: 2 });
@@ -49,10 +49,10 @@ const dossier: Variant[] = [
     name: 'specsheet',
     mirrorable: true,
     build(c, k) {
-      c.gridfield(area(0, 0, 8, 10), c.colors.text, 8, 0.07, true);
+      c.gridfield(area(0, 0, 8, 10), c.colors.text, 0.07, true);
       c.text('display', k.name, area(0, 0, 8, 2), { vAlign: 'top', maxLines: 1, effect: 'dotmatrix' });
       c.text('data', `[ ${k.status} ]`, area(0, 2, 4, 1), { vAlign: 'top', color: c.colors.accent, maxLines: 1 });
-      c.hatch(area(4, 2, 4, 1), c.colors.text, 9);
+      c.hatch(area(4, 2, 4, 1), c.colors.text, c.grid.spec.cell ?? 8);
       photo(c, area(0, 3, 5, 5));
       c.frame(area(0, 3, 5, 5), 'corners', c.colors.text);
       c.table(k.specs, area(5, 3, 3, 4));
@@ -74,9 +74,9 @@ const consoleV: Variant[] = [
     colorMode: 'ink',
     build(c, k) {
       const sig = c.colors.signal;
-      c.text('meta', 'Waiting...', area(0, 0, 2, 1), { vAlign: 'bottom' });
-      c.text('meta', `/   Scanning ${k.location}   /`, area(2, 0, 4, 1), { vAlign: 'bottom', color: sig, box: { stroke: sig } });
-      c.text('meta', '● Live', area(6, 0, 2, 1), { vAlign: 'bottom', align: 'right', color: c.colors.ink, box: { fill: sig } });
+      c.text('meta', 'Waiting...', area(0, 0, 2, 1), { vAlign: 'center' });
+      c.text('meta', `/   Scanning ${k.location}   /`, area(2, 0, 4, 1), { vAlign: 'center', color: sig, box: { stroke: sig } });
+      c.text('meta', '● Live', area(6, 0, 2, 1), { vAlign: 'center', align: 'right', color: c.colors.ink, box: { fill: sig } });
       screen(c, area(0, 1, 8, 6));
       c.frame(area(0, 1, 8, 6), 'brackets', sig);
       c.text('display', k.time, area(0, 7, 5, 2), { vAlign: 'bottom', maxLines: 1, color: sig, effect: 'glow' });
@@ -103,9 +103,9 @@ const consoleV: Variant[] = [
       c.text('deck', k.headline, area(1, 5, 6, 1), { vAlign: 'top', maxLines: 2 });
       c.text('data', slashes(c), area(1, 6, 2, 1), { vAlign: 'top', color: sig, maxLines: 1 });
       c.text('data', k.location, area(3, 6, 4, 1), { vAlign: 'top', align: 'right', maxLines: 1 });
-      c.shape('stripeddisc', area(1, 7, 2, 1), sig, 0);
-      c.text('meta', `Status: ${k.status}`, area(3, 7, 2, 1), { vAlign: 'bottom', color: sig, box: { stroke: sig } });
-      c.text('meta', k.serial, area(5, 7, 2, 1), { vAlign: 'bottom', align: 'right', color: c.colors.ink, box: { fill: sig } });
+      c.shape('stripeddisc', area(1, 7, 2, 1), sig, 0, 'center');
+      c.text('meta', `Status: ${k.status}`, area(3, 7, 2, 1), { vAlign: 'center', color: sig, box: { stroke: sig } });
+      c.text('meta', k.serial, area(5, 7, 2, 1), { vAlign: 'center', align: 'right', color: c.colors.ink, box: { fill: sig } });
       c.text('body', k.body, area(0, 9, 5, 1), { vAlign: 'bottom' });
       c.text('meta', k.coords, area(5, 9, 3, 1), { vAlign: 'bottom', align: 'right' });
     },
@@ -122,18 +122,18 @@ const signage: Variant[] = [
     colorMode: 'accent',
     build(c, k) {
       const ink = c.colors.text;
-      c.gridfield(area(0, 0, 8, 10), ink, 12, 0.16, true);
+      c.gridfield(area(0, 0, 8, 10), ink, 0.13, true);
       c.frame(area(0, 0, 4, 2), 'box', ink);
       c.text('data', k.headline, area(0, 0, 4, 2), { vAlign: 'top', maxLines: 3, inset: { top: c.space.tagPad * 2, left: c.space.tagPad * 2, right: c.space.tagPad * 2, bottom: c.space.tagPad } });
-      c.hatch(area(4, 0, 4, 1), ink, 10);
+      c.hatch(area(4, 0, 4, 1), ink, c.grid.spec.cell ?? 8);
       c.text('numeral', k.code, area(4, 1, 4, 2), { vAlign: 'bottom', maxLines: 1, align: 'right' });
       c.shape(c.rng.pick(shapes(c)), area(0, 3, 1, 1), ink, 0);
       c.text('meta', `${unit(k)} — ${k.serial}`, area(1, 3, 7, 1), { vAlign: 'bottom' });
       c.text('display', k.name, area(0, 4, 8, 3), { vAlign: 'top', maxLines: 1, effect: 'dotmatrix' });
       c.table(k.specs, area(0, 7, 4, 2), { ruleColor: ink });
       c.text('body', k.body, area(5, 7, 3, 2), { vAlign: 'top' });
-      c.text('meta', `${k.coords}\n${k.location}`, area(0, 9, 4, 1), { vAlign: 'bottom' });
-      c.text('meta', `Status: ${k.status} >>>`, area(4, 9, 4, 1), { vAlign: 'bottom', align: 'right', color: c.colors.signal, box: { fill: ink } });
+      c.text('meta', `${k.coords}\n${k.location}`, area(0, 9, 4, 1), { vAlign: 'center' });
+      c.text('meta', `Status: ${k.status} >>>`, area(4, 9, 4, 1), { vAlign: 'center', align: 'right', color: c.colors.signal, box: { fill: ink } });
     },
   },
   {
@@ -143,17 +143,17 @@ const signage: Variant[] = [
     colorMode: 'ink',
     build(c, k) {
       const sig = c.colors.signal;
-      c.hatch(area(0, 0, 8, 1), sig, 12);
+      c.hatch(area(0, 0, 8, 1), sig, c.grid.spec.cell ?? 8);
       c.text('display', k.name, area(0, 1, 8, 3), { vAlign: 'top', maxLines: 2, color: sig, effect: c.rng.pick(['solid', 'scanline']) });
       c.text('deck', k.headline, area(0, 4, 5, 1), { vAlign: 'top', maxLines: 2 });
       c.shape(c.rng.pick(['stripeddisc', 'reticle'] as ShapeName[]), area(5, 4, 3, 3), sig, 0);
       // 4 rows × tableRow (28) fit exactly in 2 modules (68 + 12 + 68 = 148), so the frame hugs the table.
       c.frame(area(0, 5, 5, 2), 'corners', c.colors.text);
       c.table(k.specs, area(0, 5, 5, 2));
-      c.text('meta', `${unit(k)}\n${k.serial}`, area(0, 8, 2, 1), { vAlign: 'bottom' });
-      c.text('meta', `${k.coords}\n${k.location}`, area(2, 8, 3, 1), { vAlign: 'bottom' });
-      c.text('meta', `Status: ${k.status}`, area(5, 8, 3, 1), { vAlign: 'bottom', align: 'right', color: c.colors.ink, box: { fill: sig } });
-      c.hatch(area(0, 9, 8, 1), sig, 12);
+      c.text('meta', `${unit(k)}\n${k.serial}`, area(0, 8, 2, 1), { vAlign: 'center' });
+      c.text('meta', `${k.coords}\n${k.location}`, area(2, 8, 3, 1), { vAlign: 'center' });
+      c.text('meta', `Status: ${k.status}`, area(5, 8, 3, 1), { vAlign: 'center', align: 'right', color: c.colors.ink, box: { fill: sig } });
+      c.hatch(area(0, 9, 8, 1), sig, c.grid.spec.cell ?? 8);
     },
   },
 ];
